@@ -1297,7 +1297,7 @@ func correrServidores(serverOne *http.Server, serverTwo *http.Server) {
 	}()
 	go func() {
 		defer wg.Done()
-		err := serverTwo.ListenAndServeTLS(certPath, keyPath)
+		err := serverTwo.ListenAndServe()
 		if errors.Is(err, http.ErrServerClosed) {
 			fmt.Printf("Servidor 2 cerrado\n")
 		} else if err != nil {

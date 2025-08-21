@@ -166,7 +166,6 @@
             flex-direction: column;
             max-width: 80%;
             margin: auto;
-            height: 80%;
         }
 
         #texto-form h3 {
@@ -412,6 +411,73 @@
         #btn-enviar-h{
             display: none;
         }
+
+        #pie-col-1{
+            text-align: center;
+            color: white;
+            margin-top: 4rem;
+        }
+
+        #pie-col-1 h4{
+            font-size: 1.3rem;
+            font-style: oblique;
+        }
+
+        #pie-notas{
+            display: flex;
+            font-size: 1.1rem;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .con-punto{
+            position: relative;
+            padding-left: 2.5rem;
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .con-punto::before{
+            position: absolute;
+            top: .9rem;
+            left: 0;
+            content: '';
+            width: 1.5rem;
+            height: 1.5rem;
+            background-color: white;
+            border-radius: 50%;
+        }
+
+        #pie-notas>h5{
+            max-width: 10rem;
+            color: hsl(45, 86%, 88%);
+            font-size: 1.3rem;
+        }
+
+        #linea-blanca{
+            border-right: 1px solid white;
+            padding-right: 1rem;
+        }
+
+        #logos-pie{
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        #logos-pie>div{
+            width: fit-content;
+            height: 4rem;
+        }
+
+        #logos-pie img{
+            height: 100%;
+            width: unset;
+        }
     </style>
     <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
 </head>
@@ -429,6 +495,26 @@
                 <h4>2025 MODALIDAD VIRTUAL</h4>
                 <p>“<b>UNIVIDA S.A.</b> 10 Años transformando vidas: aciertos y nuevas necesidades de seguros en
                     sectores vulnerables y populares de Bolivia”</p>
+            </div>
+            <div id="pie-col-1">
+                <h4>Certificación con valor curricular</h4>
+                <div id="pie-notas">
+                    <div class="con-punto" id="linea-blanca">
+                        <p>Webinar I Miércoles 3 de septiembre de 2025</p>
+                        <p>Webinar II Viernes 5 de septiembre de 2025</p>
+                    </div>
+                    <div class="con-punto">
+                        <p>10:00 - 12:00</p>
+                    </div>
+                    <h5>Webinars gratuitos</h5>
+                </div>
+                <div id="logos-pie">
+                    <div><img src="/static/img/pie1.png" alt="img"></div>
+                    <div><img src="/static/img/pie2.png" alt="img"></div>
+                    <div><img src="/static/img/pie3.png" alt="img"></div>
+                    <div><img src="/static/img/pie4.png" alt="img"></div>
+                    <div><img src="/static/img/pie5.png" alt="img"></div>
+                </div>
             </div>
         </div>
         <div id="col-2">
