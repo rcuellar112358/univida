@@ -357,7 +357,7 @@ func main() {
 	// https://gist.github.com/d-schmidt/587ceec34ce1334a5e60
 	servPagina := &http.Server{Addr: ":443", Handler: muxPagina}
 	servAdmin := &http.Server{Addr: puertoServAdmin, Handler: muxAdmin}
-	go http.ListenAndServe(":80", http.HandlerFunc(redirect))
+	//go http.ListenAndServe(":80", http.HandlerFunc(redirect))
 
 	fmt.Println("Se escucha en :443 y :80")
 	correrServidores(servPagina, servAdmin)
