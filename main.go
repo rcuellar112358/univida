@@ -284,6 +284,14 @@ var GLOBAL_inscritos []InscritoMas
 var GLOBAL_contador_inscritos uint32
 
 func main() {
+	smtpAddr := SMTP_HOST + ":587" // Replace with your SMTP server address and port
+
+	_, err := smtp.Dial(smtpAddr)
+	if err != nil {
+		log.Fatal("Error connecting to SMTP server: ", err)
+	}
+
+	fmt.Printf("Successfully connected to SMTP server at %s\n", smtpAddr)
 	// Sera creada si no existe
 	opcionesDB := badger.DefaultOptions("./db")
 	opcionesDB.ValueLogFileSize = 1<<26 - 1
