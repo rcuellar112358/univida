@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es-419">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            transition: 100ms;
+            box-sizing: border-box;
+            font-family: "TT Hoves", sans-serif;
+            color: inherit;
+            font-size: inherit;
+            font-weight: 400;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        #c {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #171719;
+        }
+
+        .contenedor-login {
+            position: absolute;
+            display: flex;
+            z-index: 10;
+            margin: auto;
+            width: 100%;
+            height: 100vh;
+            color: white;
+        }
+
+        .contenedor-form {
+            position: relative;
+            background-color: hsl(0, 0%, 18%);
+            margin: auto;
+            padding: 1em;
+            font-size: 18px;
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;;
+        }
+        .contenedor-form h2{
+            font-weight: 700;
+        }
+
+        form {
+            margin-top: 1em;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5em;
+        }
+
+        input[type="submit"] {
+            margin-top: 1em;
+            background-color: hsl(0, 100%, 43%);
+            color: white;
+            padding: 0.2em;
+        }
+
+        input[type="submit"]:hover {
+            background-color: hsl(0, 100%, 48%);
+            cursor: pointer;
+        }
+
+        input {
+            border: none;
+            color: white;
+            background-color: transparent;
+            border: 1px solid hsl(214, 3%, 43%);
+            padding: 0.5rem 1rem;
+            border-radius: .5rem;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus,
+        button:focus {
+            outline: none;
+        }
+
+        @media (min-width: 600px) {
+            .contenedor-form {
+                padding: 2em;
+                width: unset;
+            }
+        }
+
+        #error-login {
+            opacity: 0;
+            position: absolute;
+            bottom: -2em;
+            left: 0;
+            z-index: 10;
+            background-color: hsl(0, 100%, 90%);
+            width: 100%;
+            text-align: center;
+            padding: 0.5em;
+            color: black;
+            transition: 300ms;
+        }
+
+        #error-login.aparecer {
+            opacity: 1;
+        }
+
+        #ingresar{
+            font-weight: 700;
+            border-radius: 4px;
+        }
+    </style>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div class="contenedor-login">
+        <div class="contenedor-form">
+            <h2>ADMINISTRACIÓN</h2>
+            <form id="formulario" method="POST" action="/credenciales">
+                <label for="username">Nombre de Usuario:</label>
+                <input type="text" name="username" id="username" required="">
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" required="">
+                <input type="submit" value="Ingresar" name="Ingresar" id="ingresar">
+            </form>
+            <div id="error-login">Lo sentimos, credenciales no válidas</div>
+        </div>
+    </div>
+    <canvas id="c"></canvas>
+</body>
+<script>
+    window.addEventListener("load", () => {
+        if (window.performance.navigation.type) {
+            //console.log("Carga NORMAL")
+        } else {
+            if (document.referrer === document.URL) {
+                document.getElementById("error-login").classList.add("aparecer")
+                setTimeout(() => {
+                    document.getElementById("error-login").classList.remove("aparecer")
+                }, 2000)
+            } else {
+                //console.log("Solo redirige para auth")
+            }
+        }
+    })
+    ///////////////////////////////////////
+    var MAX_PARTICLES = 1000,
+        RADIUS = 100,
+        MAX_LINES = 10,
+        MAX_LIFE_SPAN = 1200,
+        MIN_DENSITY = 15,
+        OFFSET_DENSITY = 15,
+        _context,
+        _mouseX,
+        _mouseY,
+        _particles,
+        _canvasWidth,
+        _canvasHalfWidth,
+        _canvasHeight,
+        _canvasHalfHeight;
+    init();
+
+    function init() {
+        _particles = [];
+        _context = c.getContext('2d');
+        window.addEventListener('resize', onResize);
+        window.addEventListener('mousemove', onMouseMove);
+        onResize();
+        createInitialParticles();
+        redraw();
+    }
+
+    function createInitialParticles() {
+        var x;
+        for (x = 50; x < _canvasWidth - 50; x += 10) {
+            _particles.push(new Particle(x - _canvasHalfWidth, -75 + (Math.random() * 200)));
+        }
+    }
+
+    function onMouseMove(e) {
+        _mouseX = e.pageX;
+        _mouseY = e.pageY;
+    }
+
+    function onResize() {
+        _canvasWidth = c.offsetWidth;
+        _canvasHalfWidth = Math.round(_canvasWidth / 2);
+        _canvasHeight = c.offsetHeight,
+            _canvasHalfHeight = Math.round(_canvasHeight / 2);
+        c.width = _canvasWidth;
+        c.height = _canvasHeight;
+    }
+
+    function redraw() {
+        var copyParticles = _particles.slice(),
+            particle,
+            i;
+        if (_particles.length < MAX_PARTICLES && _mouseX && _mouseY) {
+            particle = new Particle(_mouseX - _canvasHalfWidth, _mouseY - _canvasHalfHeight);
+            _particles.push(particle);
+            _mouseX = false;
+            _mouseY = false;
+        }
+        _context.clearRect(0, 0, _canvasWidth, _canvasHeight);
+
+        for (i = 0; i < copyParticles.length; i++) {
+            particle = copyParticles[i];
+            particle.update();
+        }
+        drawLines();
+        requestAnimationFrame(redraw);
+    }
+
+    function drawLines() {
+        var particleA,
+            particleB,
+            distance,
+            opacity,
+            lines,
+            i,
+            j;
+        _context.beginPath();
+
+        for (i = 0; i < _particles.length; i++) {
+            lines = 0;
+            particleA = _particles[i];
+            for (j = i + 1; j < _particles.length; j++) {
+                particleB = _particles[j];
+                distance = getDistance(particleA, particleB);
+                if (distance < RADIUS) {
+                    lines++;
+                    if (lines <= MAX_LINES) {
+                        opacity = 0.5 * Math.min((1 - distance / RADIUS), particleA.getOpacity(), particleB.getOpacity());
+                        _context.beginPath();
+                        _context.moveTo(particleA.getX() + _canvasHalfWidth, particleA.getY() + _canvasHalfHeight);
+                        _context.lineTo(particleB.getX() + _canvasHalfWidth, particleB.getY() + _canvasHalfHeight);
+                        _context.strokeStyle = 'rgba(255,255,255,' + opacity + ')';
+                        _context.stroke();
+                    }
+                }
+            }
+        }
+    }
+
+    function Particle(originX, originY) {
+        var _this = this,
+            _direction = -1 + Math.round(Math.random()) * 2,
+            _angle = Math.random() * 10,
+            _posX = originX,
+            _posY = originY,
+            _density = MIN_DENSITY + Math.random() * OFFSET_DENSITY,
+            _lifeSpan = 0,
+            _opacity = 1;
+        function update() {
+            _lifeSpan++;
+            if (_lifeSpan % 3 === 0) {
+                _opacity = 1 - _lifeSpan / MAX_LIFE_SPAN;
+                _angle += 0.001 * _direction;
+                _posY += (Math.cos(_angle + _density) + 1) * 0.75;
+                _posX += Math.sin(_angle) * 0.75;
+                if (_lifeSpan >= MAX_LIFE_SPAN) {
+                    destroy();
+                }
+            }
+        }
+
+        function destroy() {
+            var particle,
+                i;
+            for (i = 0; i < _particles.length; i++) {
+                particle = _particles[i];
+                if (particle === _this) {
+                    _particles.splice(i, 1);
+                }
+            }
+        }
+
+        this.getOpacity = function () { return _opacity; };
+        this.getX = function () { return _posX; };
+        this.getY = function () { return _posY; };
+        this.update = update;
+    }
+
+    function getDistance(particle1, particle2) {
+        var deltaX = particle1.getX() - particle2.getX(),
+            deltaY = particle1.getY() - particle2.getY();
+        return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    }
+</script>
+
+</html>

@@ -1,0 +1,57 @@
+{{define "titulo"}}Cambiar Contraseña{{end}}
+{{define "contenido"}}
+<div class="contenedor-inputs angosto">
+    <div class="parrafo">
+        <h5>Cambiar Contraseña</h5>
+        <form action="{{if .IdCambiar}}/cambiar-user-password/{{.IdCambiar}}{{else}}/cambiar-password{{end}}" method="post" id="form"
+            accept="image/*" enctype="multipart/form-data" autocomplete="off">
+            <div>
+                <label for="password">Nueva Contraseña(*):</label>
+                <input type="password" name="password" id="password" required="" minlength="8"
+                    onChange="verificarIgualdad()">
+            </div>
+            <div>
+                <label for="password_2">Repetir Nueva Contraseña(*):</label>
+                <input type="password" name="password_2" id="password_2" required="" minlength="8"
+                    onChange="verificarIgualdad()">
+            </div>
+            <div>
+                <input class="boton-grande" type="submit" name="Cambiar" value="Cambiar">
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    const form = document.getElementById('form');
+    window.onload = () => {
+        form.reset()
+    }
+    function verificarIgualdad() {
+        const password = document.querySelector('input[name=password]');
+        const confirm = document.querySelector('input[name=password_2]');
+        if (confirm.value === password.value) {
+            confirm.setCustomValidity('');
+        } else {
+            confirm.setCustomValidity('Las contraseñas no coinciden');
+        }
+    }
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        let formData = new FormData(form);
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+            .then(function (response) {
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    console.log('Form submission failed');
+                }
+            })
+            .catch(function (error) {
+                console.log('Error submitting the form:', error);
+            });
+    });
+</script>
+{{end}}

@@ -1,0 +1,43 @@
+{{define "titulo"}}Listado de Usuarios{{end}}
+{{define "contenido"}}
+<div>
+    <div class="parrafo">
+        <div class="encima-tabla">
+            <a href="/agregar-usuario" class="boton-grande">
+                &#x002B; Añadir Usuario
+            </a>
+        </div>
+        <div class="contenedor-tabla">
+            <div id="tabla1" class="tabla">
+                <div id="tabla1-head" class="tabla-fila tabla-head">
+                    <div>Nombre Completo</div>
+                    <div>Perfil</div>
+                    <div>Opciones</div>
+                </div>
+                {{range .Usuarios}}
+                <div class="tabla-fila">
+                    <div>{{.Usuario.NombreCompleto}}</div>
+                    <div>{{.Perfil}}</div>
+                    <div class="celda-boton">
+                        <div class="celda-opciones">
+                            <a href="/editar-usuario/{{.Id}}" class="boton-normal boton-tabla">Editar</a>
+                            <a href="/cambiar-user-password/{{.Id}}" class="boton-normal boton-tabla">Contraseña</a>
+                            {{if ne .Usuario.IdPerfil 0}}
+                            <a href="/eliminar-usuario/{{.Id}}" class="boton-borrar eliminar boton-tabla">Eliminar</a>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.querySelectorAll(".boton-borrar.eliminar").forEach(c => {c.addEventListener("click", (e)=>{
+        if(!confirm("¿Realmente desea borrar al usuario?")){
+            e.preventDefault();
+        }
+    })})
+</script>
+{{end}}

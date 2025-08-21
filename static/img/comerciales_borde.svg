@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 64">
+  <defs>
+    <clipPath id="clip-path">
+      <path fill="none" d="M-868-1177h1920V-97H-868z"/>
+    </clipPath>
+    <style>
+      .cls-3{fill:#fff}
+    </style>
+  </defs>
+  <g id="Sobre_Nosotros" data-name="Sobre Nosotros">
+    <g clip-path="url(#clip-path)">
+      <path d="M-770-513s556 66 871 493c-297-160-409-120-410-98-3 30 7 188 4 184-363-370-758-377-1132-428 219-24 435-38 727 4 50 8-60-155-60-155Z" class="cls-3"/>
+    </g>
+    <path d="M75 64a64 64 0 0 1-54-30L0 0h75Z" class="cls-3"/>
+  </g>
+</svg>

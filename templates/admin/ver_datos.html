@@ -1,0 +1,67 @@
+{{define "titulo"}}Datos de persona inscrita{{end}}
+{{define "css_extra"}}
+<style>
+    .parrafo {
+        max-width: 80rem;
+        width: fit-content;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .parrafo>div {
+        display: flex;
+        margin-bottom: 1rem;
+    }
+
+    .parrafo .label {
+        width: 20rem;
+        font-weight: 700;
+    }
+
+    @media(width < 30rem) {
+        .parrafo>div {
+            flex-direction: column;
+        }
+    }
+</style>
+{{end}}
+{{define "contenido"}}
+<div class="parrafo">
+    <div>
+        <div class="label">Nombre:</div>
+        <div class="dato">{{.Inscrito.Inscrito.Nombre}}</div>
+    </div>
+    <div>
+        <div class="label">Institución:</div>
+        <div class="dato">{{.Inscrito.Inscrito.Institucion}}</div>
+    </div>
+    <div>
+        <div class="label">Celular:</div>
+        <div class="dato">{{.Inscrito.Inscrito.Celular}}</div>
+    </div>
+    <div>
+        <div class="label">Email:</div>
+        <div class="dato">{{.Inscrito.Inscrito.Email}}</div>
+    </div>
+    <div>
+        <div class="label">Cédula:</div>
+        <div class="dato">{{.Inscrito.Inscrito.CI}}</div>
+    </div>
+    <div>
+        <div class="label">Departamento:</div>
+        <div class="dato">{{.Inscrito.DepartamentoStr}}</div>
+    </div>
+    <div>
+        <div class="label">Sexo:</div>
+        <div class="dato">{{.Inscrito.SexoStr}}</div>
+    </div>
+    <div>
+        <div class="label">Edad:</div>
+        <div class="dato">{{.Inscrito.EdadStr}}</div>
+    </div>
+    <div>
+        <div class="label">Ocupación:</div>
+        <div class="dato">{{.Inscrito.OcupacionStr}}</div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,193 @@
+{{define "titulo"}}Inscritos{{end}}
+{{define "css_extra"}}
+<style>
+    .parrafo {
+        max-width: 100%;
+        font-size: 1.2rem;
+    }
+    #tabla1 .tabla-fila>div>a {
+        color: hsl(240, 100%, 40%);
+        text-decoration: underline;
+    }
+    .celda-boton{
+        width: 22rem;
+    }
+</style>
+{{end}}
+{{define "contenido"}}
+<div class="parrafo">
+    <div class="titulo-tabla">
+        <h2>Inscritos</h2>
+        {{if .Inspectores}}
+        <div class="paginador" style="margin-top: 0;">
+            {{if ne .PrevPag 0}}
+            <a href="/inscritos/{{.PrevPag}}{{if .Query}}?{{.Query}}{{end}}" class="pag-flecha pag-flecha-izq"><img
+                    src="/static/img/flecha.svg" alt="icono"></a>
+            {{end}}
+            {{range .EnlacesPaginador}}
+            {{if ne . 0}}
+            <a {{if eq $.PaginaActual .}}class="resaltar-pag"
+                {{end}}href="/inscritos/{{.}}{{if $.Query}}?{{$.Query}}{{end}}">{{.}}</a>
+            {{else}}
+            <div>...</div>
+            {{end}}
+            {{end}}
+            {{if ne .NextPag 0}}
+            <a href="/inscritos/{{.NextPag}}{{if .Query}}?{{.Query}}{{end}}" class="pag-flecha pag-flecha-der"><img
+                    src="/static/img/flecha.svg" alt="icono"></a>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+    <div class="encima-tabla">
+        <div class="div-1">
+            <div class="cont-busqueda">
+                <input type="text" name="buscador" id="buscador" {{if .OrigQuery}}value="{{.OrigQuery}}"
+                    {{end}}placeholder="Buscar...">
+                <div id="btn-buscar"><img src="/static/img/logo_busqueda.svg" alt="logo"></div>
+            </div>
+        </div>
+        <div class="div-1">
+            <a href="/exportar-inscritos-xlsx" id="btn-exportar" class="boton-grande-svg">EXPORTAR <img src="/static/img/excel.svg" alt="excel"></a>
+        </div>
+        <div id="mensaje-error" class="no-mostrar">
+            ERROR: Archivo incorrecto, no cumple el formato
+        </div>
+    </div>
+    <div class="contenedor-tabla">
+        <div id="tabla1" class="tabla">
+            <div id="tabla1-head" class="tabla-fila tabla-head">
+                <div class="nombre">Nombre</div>
+                <div class="celular">Celular</div>
+                <div class="email">Email</div>
+                <div class="celda-boton">Opciones</div>
+            </div>
+            {{range .Inscritos}}
+            <div class="tabla-fila cuerpo">
+                <div class="nombre">{{.Inscrito.Nombre}}</div>
+                <div class="celular">{{.Inscrito.Celular}}</div>
+                <div class="email">{{.Inscrito.Email}}</div>
+                <div class="celda-boton">
+                    <div class="celda-opciones">
+                        <a href="/ver-datos/{{.Id}}" title="VER DATOS" class="boton-icono boton-ver"></a>
+                        <a href="/eliminar-inscrito/{{.Id}}" title="BORRAR" class="boton-icono boton-eliminar"></a>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        {{if .Inscritos}}
+        <div class="paginador">
+            {{if ne .PrevPag 0}}
+            <a href="/inscritos/{{.PrevPag}}{{if .Query}}?{{.Query}}{{end}}" class="pag-flecha pag-flecha-izq"><img
+                    src="/static/img/flecha.svg" alt="icono"></a>
+            {{end}}
+            {{range .EnlacesPaginador}}
+            {{if ne . 0}}
+            <a {{if eq $.PaginaActual .}}class="resaltar-pag"
+                {{end}}href="/inscritos/{{.}}{{if $.Query}}?{{$.Query}}{{end}}">{{.}}</a>
+            {{else}}
+            <div>...</div>
+            {{end}}
+            {{end}}
+            {{if ne .NextPag 0}}
+            <a href="/inscritos/{{.NextPag}}{{if .Query}}?{{.Query}}{{end}}" class="pag-flecha pag-flecha-der"><img
+                    src="/static/img/flecha.svg" alt="icono"></a>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+</div>
+<input type="file" id="importacion" name="importacion"
+    accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" />
+<script>
+    document.querySelectorAll(".boton-eliminar").forEach(c => {
+        c.addEventListener("click", (e) => {
+            if (!confirm("¿Realmente desea borrar el registro?")) {
+                e.preventDefault();
+            }
+        })
+    })
+
+
+    const importacion = document.getElementById("importacion")
+    const msgError = document.getElementById("mensaje-error")
+    const contTabla = document.querySelector(".contenedor-tabla")
+
+    importacion.onchange = () => {
+        if (importacion.files[0].type.startsWith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+            const file = importacion.files[0]
+            const formData = new FormData()
+            formData.append('file', file)
+            fetch("/importar-inscritos-xlsx", {
+                method: 'POST',
+                body: formData
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        window.location.href = '/inscritos';
+                    } else {
+                        mensajeError()
+                    }
+                })
+                .catch(function (error) {
+                    console.log('Error submitting the form:', error);
+                });
+        } else {
+            mensajeError()
+        }
+    }
+
+    function mensajeError() {
+        msgError.classList.remove("no-mostrar")
+        setTimeout(() => {
+            msgError.classList.add("no-mostrar")
+        }, 2000)
+    }
+
+
+    /*============================
+    BUSAR CORTE
+    =============================*/
+    const btnBuscarCorte = document.getElementById("btn-buscar")
+    const buscador = document.getElementById("buscador")
+    buscador.onkeyup = (e) => {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            if (buscador.value == "") {
+                window.location.href = `/inscritos`
+            } else {
+                window.location.href = `/inscritos/1?q=` + encodeURIComponent(buscador.value)
+            }
+        }
+    }
+    btnBuscarCorte.onclick = () => {
+        if (buscador.value == "") {
+            window.location.href = `/inscritos`
+        } else {
+            window.location.href = `/inscritos/1?q=` + encodeURIComponent(buscador.value)
+        }
+    }
+
+    function highlightTextInTable(searchText) {
+        const normalizedSearchText = searchText.toLowerCase();
+        const rows = document.querySelectorAll('.tabla-fila.cuerpo');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('.nombre, .celular, .email');
+            cells.forEach(cell => {
+                cell.innerHTML = cell.innerHTML.replace(/<mark class="highlight">|<\/mark>/g, "");
+                if (cell.textContent.toLowerCase().includes(normalizedSearchText)) {
+                    const highlightedText = cell.textContent.replace(
+                        new RegExp(`(${searchText})`, 'gi'),
+                        '<mark class="highlight">$1</mark>'
+                    );
+                    cell.innerHTML = highlightedText;
+                }
+            });
+        });
+    }
+
+    if (buscador.value) {
+        highlightTextInTable(buscador.value)
+    }
+</script>
+{{end}}

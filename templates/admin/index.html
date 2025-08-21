@@ -1,0 +1,53 @@
+{{define "titulo"}}Sistema{{end}}
+{{define "css_extra"}}
+<style>
+    .parrafo p {
+        color: white !important;
+    }
+
+    .parrafo{
+        padding: 4rem;
+    }
+
+    .cont-metricas {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .cont-metricas>div {
+        background-color: hsl(0, 0%, 23%);
+        padding: 2rem;
+        border-radius: 2rem;
+        text-align: center;
+    }
+
+    .cont-metricas p {
+        font-size: 4rem;
+    }
+
+    .cont-metricas h2 {
+        font-size: 2rem;
+    }
+</style>
+{{end}}
+{{define "contenido"}}
+<div class="parrafo">
+    <h2>Métricas</h2>
+    <div class="cont-metricas">
+        <div>
+            <h2>Nro. Cotizaciones:</h2>
+            <p>{{.ContCotizaciones}}</p>
+        </div>
+        <div>
+            <h2>Nro. Clientes:</h2>
+            <p>{{.ContClientes}}</p>
+        </div>
+    </div>
+</div>
+
+<script>
+
+</script>
+{{end}}

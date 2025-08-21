@@ -1,0 +1,600 @@
+{{define "index"}}
+<!DOCTYPE html>
+<html lang="es-419">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Formulario de inscripción</title>
+    <style>
+        :root {
+            --entel-oscuro: hsl(210, 100%, 31%);
+            --entel-claro: #00a1e6;
+            --hover: #f6f9fc;
+            --sombra: 0 .3rem .5rem #00000005, 0 0 .2rem #0000000d, 0 .1rem .4rem #00000014;
+            --color-fondo: hsl(0, 0%, 20%);
+            --color-fuente-suave: #495057;
+            --color-contraste-tabla: #f8f9fa;
+            --color-resalta: #212121;
+            --color-borde: #dfe7ef;
+            --tam-botones: 3rem;
+            --ancho-regla: 4rem;
+            --negro: #1a202c;
+            --lapaz-rojo: #911728;
+            --lapaz-verde: #155932;
+            font-size: 10px;
+        }
+
+        input:focus-visible {
+            outline: none;
+        }
+
+        @media (width > 100rem) {
+            :root {
+                font-size: .65vw;
+            }
+        }
+
+        @font-face {
+            font-family: fuenteEspecial;
+            src: url("/static/Aileron-Black.otf");
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            transition: 100ms;
+            box-sizing: border-box;
+            color: inherit;
+            font-family: inherit;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+            display: flex;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 400;
+            line-height: 1.2;
+            color: white;
+            font-size: 3rem;
+        }
+
+        h5 {
+            font-size: 1.8rem;
+        }
+
+        *,
+        html {
+            scroll-behavior: smooth !important;
+        }
+
+        html {
+            font-size: 1.8rem;
+            color: #333333;
+            font-family: fuenteTexto;
+        }
+
+        @media screen and (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+        }
+
+        body {
+            background-color: var(--color-fondo);
+            background-image: url('/static/img/univida_fondo.jpg');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: 50% 50%;
+            background-repeat: no-repeat;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100%;
+        }
+
+        img {
+            width: 100%;
+        }
+
+        #contenido {
+            margin: auto;
+            width: 100%;
+            max-width: 100rem;
+            height: 75vh;
+            background-color: hsl(224, 38%, 19%);
+            display: flex;
+            border-radius: 2rem;
+        }
+
+        #col-1 {
+            width: 55%;
+            background-image: url('/static/img/fondoLetrasUnivida.png');
+            background-size: 100% auto;
+            background-position: 50% 50%;
+            background-repeat: no-repeat;
+        }
+
+        #col-2 {
+            width: 45%;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #logos-form {
+            width: 100%;
+            justify-content: space-between;
+            display: flex;
+            height: 20%;
+            padding: 4rem 4rem 0 4rem;
+        }
+
+        #logos-form>div {
+            width: 10rem;
+            max-height: 4rem;
+            justify-content: center;
+            align-items: center;
+            display: flex;
+        }
+
+        #logos-form>div img {
+            max-height: 100%;
+        }
+
+        #texto-form {
+            display: flex;
+            align-items: center;
+            color: white;
+            justify-content: top;
+            padding-top: 3rem;
+            gap: 1rem;
+            text-align: center;
+            flex-direction: column;
+            max-width: 80%;
+            margin: auto;
+            height: 80%;
+        }
+
+        #texto-form h3 {
+            font-weight: 900;
+            font-size: 4.5rem;
+            line-height: 4rem;
+            text-shadow: 1px 3px 0 hsl(0, 0%, 20%), 1px 13px 5px hsl(0, 0%, 20%);
+        }
+
+        #texto-form h4 {
+            font-family: fuenteEspecial;
+            font-weight: 500;
+            color: hsl(43, 100%, 89%);
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-stroke-color: hsl(34, 57%, 62%);
+        }
+
+        #form {
+            background-color: white;
+            padding: 3rem;
+            border-radius: 2rem;
+            color: hsl(228, 39%, 17%);
+            font-size: 1.4rem;
+            display: flex;
+            flex-wrap: wrap;
+            width: 80%;
+            justify-content: space-between;
+            gap: 1.1rem 1rem;
+        }
+
+        #form p {
+            margin-bottom: .5rem;
+            font-size: 1.2rem;
+        }
+
+        #form select,
+        #form input {
+            width: 100%;
+            padding: .5rem 1rem;
+            background-color: hsl(0, 0%, 95%);
+            border-radius: .5rem;
+            border: none;
+            height: 2.5rem;
+            font-size: 1.2rem;
+        }
+
+        #form>div {
+            width: 100%;
+        }
+
+        #form>div.w50 {
+            width: calc(50% - .5rem);
+        }
+
+        #form #btn-enviar {
+            background-color: hsl(228, 24%, 25%);
+            color: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 1.2rem;
+            padding: .5rem 0;
+            border-radius: .3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        #form #btn-enviar:hover {
+            background-color: hsl(228, 24%, 35%);
+        }
+
+        @media(width < 60rem) {
+            #contenido {
+                flex-direction: column;
+                gap: 5rem;
+            }
+
+            #contenido>div {
+                width: 100%;
+            }
+
+            #col-1 {
+                background-image: none;
+            }
+
+            #contenido {
+                background-image: url('/static/img/fondoLetrasUnivida.png');
+                background-size: cover;
+                background-position: 50% 50%;
+                background-repeat: no-repeat;
+            }
+        }
+
+        @media(width < 40rem) {
+            #form>div.w50 {
+                width: 100%;
+            }
+        }
+
+        #cont-captcha {
+            max-width: 20rem;
+            margin: 0 auto;
+        }
+
+        #mensaje-exito {
+            background-color: white;
+            color: hsl(227, 30%, 22%);
+            width: fit-content;
+            margin: 10rem auto;
+            border-radius: 4rem;
+            padding: 6rem 4rem;
+        }
+
+        #mensaje-exito * {
+            color: hsl(227, 30%, 22%);
+            font-size: 1.4rem;
+            text-align: center;
+        }
+
+        #cont-svg-1 {
+            width: 6rem;
+            margin: 0 auto 2.5rem auto;
+        }
+
+        #cont-svg-2 {
+            width: 3rem;
+            margin: 0 auto;
+        }
+
+        #mensaje-exito h3 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: hsl(228, 24%, 25%);
+            line-height: 2.6rem;
+        }
+
+        #mensaje-exito h4 {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: hsl(204, 44%, 45%);
+            line-height: 4rem;
+            margin-bottom: 2rem;
+        }
+
+        #mensaje-exito h5 {
+            font-weight: 700;
+        }
+
+        #mensaje-exito h6,
+        #mensaje-exito h5 {
+            font-size: 1.1rem;
+        }
+
+        #mensaje-exito h6 {
+            margin-bottom: 3rem;
+        }
+
+        #exito-pie {
+            background-color: hsl(0, 0%, 95%);
+            max-width: 24rem;
+            margin: 0 auto 1rem auto;
+            padding: 2rem;
+            border-radius: 1rem;
+        }
+
+        #exito-pie b,
+        #exito-pie p {
+            font-size: .8rem;
+        }
+
+        #p-11 {
+            margin-bottom: 1rem;
+        }
+
+        #mensaje-exito>p {
+            font-size: .8rem;
+            color: hsl(225, 8%, 72%);
+        }
+
+        #mensaje-mail,
+        #mensaje-error {
+            position: fixed;
+            width: 100%;
+            top: 20rem;
+            left: 0;
+            pointer-events: none;
+            opacity: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        #mensaje-mail>div,
+        #mensaje-error>div {
+            color: hsl(0, 100%, 90%);
+            border-radius: 1rem;
+            padding: 4rem 8rem;
+            background-color: hsl(0, 100%, 40%);
+        }
+
+        #mensaje-mail.oculto,
+        #mensaje-error.oculto {
+            opacity: 0;
+        }
+
+
+        #form.oculto,
+        #mensaje-exito.oculto {
+            display: none;
+        }
+
+        #form.bloquear {
+            pointer-events: none;
+        }
+
+        #form.bloquear p{
+            color: grey;
+        }
+
+        .spinner {
+            display: none;
+            width: 1rem; 
+            height: 1rem; 
+            border: .2rem solid rgba(0, 0, 0, 0.1); 
+            border-top-color: #3498db; 
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #form.bloquear #btn-enviar{
+            background-color: grey;
+        }
+
+        #form.bloquear .spinner{
+            display: block;
+        }
+
+        #btn-enviar-h{
+            display: none;
+        }
+    </style>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div id="contenido">
+        <div id="col-1">
+            <div id="logos-form">
+                <div><img src="/static/img/logoUnivida.svg" alt="logo"></div>
+                <div><img src="/static/img/logo200.svg" alt="logo"></div>
+            </div>
+            <div id="texto-form">
+                <h3>III</h3>
+                <h3>CICLO DE SEMINARIOS</h3>
+                <h4>2025 MODALIDAD VIRTUAL</h4>
+                <p>“<b>UNIVIDA S.A.</b> 10 Años transformando vidas: aciertos y nuevas necesidades de seguros en
+                    sectores vulnerables y populares de Bolivia”</p>
+            </div>
+        </div>
+        <div id="col-2">
+            <form action="/enviar-inscripcion" method="post" id="form" enctype="multipart/form-data" autocomplete="off"
+                spellcheck="false">
+                <div>
+                    <p>Nombre Completo *</p>
+                    <input required type="text" name="nombre" id="nombre">
+                </div>
+                <div>
+                    <p>Universidad / Institución *</p>
+                    <input required type="text" name="institucion" id="institucion">
+                </div>
+                <div class="w50">
+                    <p>Número de celular *</p>
+                    <input required type="text" name="celular" id="celular">
+                </div>
+                <div class="w50">
+                    <p>Sexo / Género *</p>
+                    <select required name="sexo" id="sexo">
+                        <option value=""></option>
+                        {{range $key, $sexo := .SEXO}}
+                        <option value="{{$key}}">{{$sexo}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div>
+                    <p>Correo eléctronico *</p>
+                    <input required type="email" name="email" id="email" autocomplete="on">
+                </div>
+                <div class="w50">
+                    <p>Departamento *</p>
+                    <select required name="departamento" id="departamento">
+                        <option value=""></option>
+                        {{range $key, $departamento := .DEPARTAMENTOS}}
+                        <option value="{{$key}}">{{$departamento}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="w50">
+                    <p>Cédula de identidad *</p>
+                    <input required type="text" name="carnet" id="carnet">
+                </div>
+                <div class="w50">
+                    <p>Ocupación *</p>
+                    <select required name="ocupacion" id="ocupacion">
+                        <option value=""></option>
+                        {{range $key, $ocupacion := .OCUPACIONES}}
+                        <option value="{{$key}}">{{$ocupacion}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="w50">
+                    <p>Edad *</p>
+                    <select required name="edad" id="edad">
+                        <option value=""></option>
+                        {{range $key, $edad := .EDAD}}
+                        <option value="{{$key}}">{{$edad}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div id="cont-captcha">
+                    <p>Por favor resuelva el CAPTCHA:</p>
+                    <div><img src="{{.ImagenCaptcha}}" alt="captcha" id="captcha-img"></div>
+                    <input type="text" required name="captcha-input" id="captcha-input">
+                    <input type="hidden" name="captcha-id" id="captcha-id" value="{{.IdCaptcha}}">
+                </div>
+                <div>
+                    <div id="btn-enviar">Enviar Inscripción<div class="spinner"></div></div>
+                </div>
+                <input type="submit" id="btn-enviar-h">
+            </form>
+            <div id="mensaje-exito" class="oculto">
+                <div id="cont-svg-1"><img src="/static/img/exito1.svg" alt="icono"></div>
+                <h3>INSCRIPCIÓN</h3>
+                <h4>¡EXITOSA!</h4>
+                <h5>Gracias por completar su inscripción al webinar.</h5>
+                <h6>Se ha registrado correctamente en nuestro sistema</h6>
+                <div id="exito-pie">
+                    <div id="cont-svg-2"><img src="/static/img/exito2.svg" alt="icono"></div>
+                    <p id="p-11">Recibirá un correo electrónico de confirmación con todos los detalles de acceso</p>
+                    <p><b>48 horas antes del inicio del webinar</b></p>
+                </div>
+                <p>Si tiene alguna pregunta, no dude en contactarnos</p>
+            </div>
+        </div>
+    </div>
+    <div id="mensaje-error" class="oculto">
+        <div>ERROR. Intente nuevamente</div>
+    </div>
+    <div id="mensaje-mail" class="oculto">
+        <div>ERROR. Dirección de correo electrónico no válida.</div>
+    </div>
+    <script>
+        const form = document.getElementById('form');
+        const cmError = document.getElementById('mensaje-error');
+        const cmErrorMail = document.getElementById('mensaje-mail')
+        const emailField = document.getElementById('email')
+        window.onload = () => {
+            form.reset()
+        }
+
+        form.onsubmit = (event) => {
+            event.preventDefault()
+            let formData = new FormData(form)
+            form.classList.add("bloquear")
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        document.getElementById("mensaje-exito").classList.remove("oculto")
+                        form.classList.add("oculto")
+                    } else {
+                        if (response.status == 400) {
+                            emailField.value = ""
+                            cmErrorMail.classList.remove("oculto")
+                            setTimeout(() => {
+                                cmErrorMail.classList.add("oculto")
+                            }, 3000)
+                            form.classList.remove("bloquear")
+                        } else {
+                            cmError.classList.remove("oculto")
+                            setTimeout(() => {
+                                cmError.classList.add("oculto")
+                            }, 3000)
+                            form.classList.remove("bloquear")
+                            renovarCaptcha()
+                        }
+                    }
+                })
+                .catch(function (error) {
+                    cmError.classList.remove("oculto")
+                    setTimeout(() => {
+                        cmError.classList.add("oculto")
+                    }, 3000)
+                    renovarCaptcha()
+                });
+        }
+
+        function renovarCaptcha() {
+            fetch("/renovar-captcha")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById("captcha-img").src = data.ImgB64
+                    document.getElementById("captcha-id").value = data.IdCaptcha
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+            document.getElementById("captcha-input").value = ""
+        }
+
+        const btnEnviar = document.getElementById("btn-enviar")
+        const btnEnviarH = document.getElementById("btn-enviar-h")
+        btnEnviar.onclick = ()=>{
+            btnEnviarH.click()
+        }
+    </script>
+</body>
+
+</html>
+{{end}}
