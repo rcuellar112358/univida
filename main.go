@@ -295,12 +295,12 @@ func main() {
 	defer db.Close()
 
 	// NOTA: Lo unico que necesito hacer es usar ParseInLocation() en lugar de Parse()
-	LA_PAZ_TZ, err = time.LoadLocation("America/La_Paz")
-	if err != nil {
-		log.Fatal(err)
-	}
+	//LA_PAZ_TZ, err = time.LoadLocation("America/La_Paz")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
-	time.Local = LA_PAZ_TZ
+	//time.Local = LA_PAZ_TZ
 
 	crearRegistrosIniciales(db)
 
