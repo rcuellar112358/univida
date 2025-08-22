@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"net/mail"
+	"net/smtp"
 	"net/url"
 	"os"
 	"slices"
@@ -31,8 +32,6 @@ import (
 )
 
 const (
-	certPath                            = "server.crt"
-	keyPath                             = "server.key"
 	staticDir                           = "static"
 	uploadedDir                         = "uploaded"
 	puertoServAdmin                     = ":2222"
@@ -235,16 +234,17 @@ type UsuarioMas struct {
 }
 
 type Inscrito struct {
-	Key          uint64
-	Nombre       string
-	Institucion  string
-	Celular      string
-	Email        string
-	CI           string
-	Departamento uint8
-	Sexo         uint8
-	Edad         uint8
-	Ocupacion    uint8
+	Key            uint64
+	Nombre         string
+	Institucion    string
+	Celular        string
+	Email          string
+	CI             string
+	Departamento   uint8
+	Sexo           uint8
+	Edad           uint8
+	Ocupacion      uint8
+	SeEnvioCorreo1 bool
 }
 
 type InscritoMas struct {
@@ -363,6 +363,32 @@ func main() {
 	servPagina := &http.Server{Addr: ":443", Handler: muxPagina}
 	servAdmin := &http.Server{Addr: puertoServAdmin, Handler: muxAdmin}
 	//go http.ListenAndServe(":80", http.HandlerFunc(redirect))
+
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop() // Ensure the ticker is stopped when main exits
+
+	// Start a goroutine to perform the periodic task
+	go func() {
+		for range ticker.C {
+			// This code will execute every 5 minutes
+			fmt.Println("Se enviara correos:", time.Now())
+			for i := range GLOBAL_inscritos {
+				if !GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 {
+					go func() {
+						intentos := 5
+						for intentos > 0 {
+							err := enviarCorreo(GLOBAL_inscritos[i].Inscrito)
+							if err == nil {
+								break
+							}
+							intentos--
+						}
+						GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 = true
+					}()
+				}
+			}
+		}
+	}()
 
 	fmt.Println("Se escucha en :443 y :80")
 	correrServidores(servPagina, servAdmin)
@@ -522,6 +548,7 @@ func postEnviarInscripcion(db *badger.DB) http.HandlerFunc {
 			uint8(sexo),
 			uint8(edad),
 			uint8(ocupacion),
+			false,
 		}
 
 		mutex_inscritos.Lock()
@@ -991,6 +1018,7 @@ func handleExportarInscritosXlsx(w http.ResponseWriter, r *http.Request, usuario
 	f.SetCellValue(nombreSheet, "H1", "Sexo")
 	f.SetCellValue(nombreSheet, "I1", "Edad")
 	f.SetCellValue(nombreSheet, "J1", "Ocupacion")
+	f.SetCellValue(nombreSheet, "K1", "SeEnvioCorreo1")
 
 	mutex_inscritos.Lock()
 	for i, c := range GLOBAL_inscritos {
@@ -1004,9 +1032,10 @@ func handleExportarInscritosXlsx(w http.ResponseWriter, r *http.Request, usuario
 		f.SetCellValue(nombreSheet, fmt.Sprintf("H%d", i+2), c.SexoStr)
 		f.SetCellValue(nombreSheet, fmt.Sprintf("I%d", i+2), c.EdadStr)
 		f.SetCellValue(nombreSheet, fmt.Sprintf("J%d", i+2), c.OcupacionStr)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("K%d", i+2), bool2Str(c.Inscrito.SeEnvioCorreo1))
 	}
 	err := f.AddTable(nombreSheet, &excelize.Table{
-		Range:     fmt.Sprintf("A1:J%d", len(GLOBAL_inscritos)+1),
+		Range:     fmt.Sprintf("A1:K%d", len(GLOBAL_inscritos)+1),
 		StyleName: "TableStyleMedium2",
 	})
 	if logErrorHttp(w, r, err) {
@@ -1057,7 +1086,7 @@ func postImportarInscritosXlsx(db *badger.DB, w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	rows := normalizarRows(rowsRaw, 10)
+	rows := normalizarRows(rowsRaw, 11)
 
 	for i := 1; i < len(rows); i++ {
 		key, err := strconv.ParseUint(rows[i][0], 10, 64)
@@ -1103,6 +1132,7 @@ func postImportarInscritosXlsx(db *badger.DB, w http.ResponseWriter, r *http.Req
 			sexo,
 			edad,
 			ocupacion,
+			str2Bool(rows[i][10]),
 		})
 	}
 
@@ -1953,4 +1983,30 @@ func insertarVariosRegistrosBIG[T Tabla](db *badger.DB, idTabla uint8, data []T)
 		return err
 	}
 	return wb.Flush()
+}
+
+func bool2Str(b bool) string {
+	salida := "NO"
+	if b {
+		salida = "SI"
+	}
+	return salida
+}
+
+func str2Bool(str string) bool {
+	return str == "SI"
+}
+
+func enviarCorreo(ins Inscrito) error {
+	auth := smtp.PlainAuth("", CORREO_REMITENTE, PASS_CORREO, SMTP_HOST)
+	msg := fmt.Sprintf(`From: %s
+			To: %s
+			Subject: %s
+			MIME-Version: 1.0
+			Content-Type: text/html; charset=UTF-8
+
+			%s`, CORREO_REMITENTE, ins.Email, SUBJECT1, fmt.Sprintf(BODY1, ins.Nombre))
+
+	// Send the email.
+	return smtp.SendMail(SMTP_HOST+":587", auth, CORREO_REMITENTE, []string{ins.Email}, []byte(msg))
 }
