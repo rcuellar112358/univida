@@ -16,7 +16,6 @@ import (
 	"net"
 	"net/http"
 	"net/mail"
-	"net/smtp"
 	"net/url"
 	"os"
 	"slices"
@@ -68,29 +67,31 @@ const (
         <p>Hola %s,</p>
 		<p>Gracias por inscribirte a nuestro próximo webinar. Hemos recibido tu solicitud correctamente y estamos encantados de contar contigo.</p>
 		<p>A continuación, te compartimos la información general del evento:</p>
-		<p>Tema del webinar: "UNIVIDA S.A. 10 AÑOS, TRANSFORMANDO VIDAS: ACIERTOS Y NUEVAS NECESIDADES DE SEGUROS EN SECTORES VULNERABLES Y POPULARES DE BOLIVIA".</p>
+		<p style="font-weight: 700; color: #00455c;">Tema del webinar: "UNIVIDA S.A. 10 AÑOS, TRANSFORMANDO VIDAS: ACIERTOS Y NUEVAS NECESIDADES DE SEGUROS EN SECTORES VULNERABLES Y POPULARES DE BOLIVIA".</p>
 		<p>Fecha Webinar I: Miércoles, 3 de Septiembre.</p>
 		<p>Fecha Webinar II: Viernes, 5 de Septiembre.</p>
 		<p>Hora: 10:00 - 12:00.</p>
 		<p>Plataforma: La sesión se llevará a cabo a través de WEBEX</p>
 		<p>Para garantizar que tu experiencia en nuestro webinar a través de la plataforma Cisco Webex sea óptima y sin contratiempos, es fundamental que verifiques que tu equipo cumple con los siguientes requisitos técnicos y de hardware.</p>
-		<p>1. Requisitos de Conectividad y Sistema</p>
+		<p style="font-weight: 700; color: #00455c;">1. Requisitos de Conectividad y Sistema</p>
 		<p>Conexión a Internet: Es el factor más crítico. Se recomienda una conexión de banda ancha estable con al menos 10-25 Mbps de velocidad de subida y bajada para una experiencia de video de alta calidad. Puedes realizar una prueba de velocidad en sitios como speedtest.net.</p>
 		<p>Navegadores Web Compatibles (para unirse desde el navegador):</p>
 		<p>Google Chrome (versiones más recientes)</p>
 		<p>Mozilla Firefox (versiones más recientes)</p>
 		<p>Microsoft Edge (versiones más recientes)</p>
-		<p>Nota: Safari tiene funcionalidades limitadas. Se recomienda utilizar Chrome o Firefox para acceso completo.</p>
-		<p>2. Requisitos de Hardware</p>
+		<p style="font-style: oblique; color: #00455c;">Nota: Safari tiene funcionalidades limitadas. Se recomienda utilizar Chrome o Firefox para acceso completo.</p>
+
+		<p style="font-weight: 700; color: #00455c;">2. Requisitos de Hardware</p>
 		<p>Computadora:</p>
 		<p>PC: Windows 10 o 11.</p>
 		<p>Mac: macOS 10.15 (Catalina) o superior.</p>
 		<p>Audio:</p>
 		<p>Obligatorio: Altavoces o auriculares para escuchar la sesión.</p>
-		<p>Recomendado: Un micrófono integrado (en la laptop o auriculares) o externo si deseas participar con audio.</p>
+		<p style="font-style: oblique; color: #00455c;">Recomendado: Un micrófono integrado (en la laptop o auriculares) o externo si deseas participar con audio.</p>
 		<p>Video (Opcional pero recomendado):</p>
 		<p>Una cámara web integrada o externa si deseas activar tu video durante la sesión.</p>
-		<p>3. Opciones de Participación</p>
+
+		<p style="font-weight: 700; color: #00455c;">3. Opciones de Participación</p>
 		<p>Aplicación de Escritorio (Recomendada): Para la mejor experiencia, con todas las funcionalidades (vista de galería, controles avanzados, etc.), te sugerimos descargar e instalar la aplicación de Webex Meetings con antelación. Es gratuita y está disponible para Windows y Mac.</p>
 		<p>Enlace de descarga: https://www.webex.com/downloads.html</p>
 		<p>Desde el Navegador Web: Puedes unirte directamente desde Chrome, Firefox o Edge sin necesidad de instalar la aplicación, aunque algunas funciones podrían estar limitadas.</p>
@@ -345,6 +346,7 @@ func main() {
 	muxAdmin.HandleFunc("GET /ver-datos/", esAuth(handleAdminVerDatos, P_ALL))
 
 	muxAdmin.HandleFunc("GET /exportar-inscritos-xlsx", esAuth(handleExportarInscritosXlsx, P_ALL))
+	muxAdmin.HandleFunc("POST /importar-inscritos-xlsx", esAuthDB(db, postImportarInscritosXlsx, P_ALL))
 
 	// TODO: Verificar que no ocurran problemas de seguridad porque ambos servidores puedan acceder
 	// 		 a la misma carpeta de recursos
@@ -534,25 +536,26 @@ func postEnviarInscripcion(db *badger.DB) http.HandlerFunc {
 		GLOBAL_contador_inscritos++
 		mutex_inscritos.Unlock()
 
-		/*ENVIANDO CORREO*/
-		auth := smtp.PlainAuth("", CORREO_REMITENTE, PASS_CORREO, SMTP_HOST)
+		/*
+					auth := smtp.PlainAuth("", CORREO_REMITENTE, PASS_CORREO, SMTP_HOST)
 
-		// Compose the message.
-		// Note: The headers and body must be separated by a blank line.
+					// Compose the message.
+					// Note: The headers and body must be separated by a blank line.
 
-		msg := fmt.Sprintf(`From: %s
-To: %s
-Subject: %s
-MIME-Version: 1.0
-Content-Type: text/html; charset=UTF-8
+					msg := fmt.Sprintf(`From: %s
+			To: %s
+			Subject: %s
+			MIME-Version: 1.0
+			Content-Type: text/html; charset=UTF-8
 
-%s`, CORREO_REMITENTE, correoDestino, SUBJECT1, fmt.Sprintf(BODY1, nombreInscrito))
+			%s`, CORREO_REMITENTE, correoDestino, SUBJECT1, fmt.Sprintf(BODY1, nombreInscrito))
 
-		// Send the email.
-		err = smtp.SendMail(SMTP_HOST+":587", auth, CORREO_REMITENTE, []string{correoDestino}, []byte(msg))
-		if logErrorHttp(w, r, err) {
-			return
-		}
+					// Send the email.
+					err = smtp.SendMail(SMTP_HOST+":587", auth, CORREO_REMITENTE, []string{correoDestino}, []byte(msg))
+					if logErrorHttp(w, r, err) {
+						return
+					}
+		*/
 
 		w.WriteHeader(http.StatusOK)
 	}
@@ -981,6 +984,108 @@ func handleExportarInscritosXlsx(w http.ResponseWriter, r *http.Request, usuario
 		return
 	}
 	w.Write(buf.Bytes())
+}
+
+func postImportarInscritosXlsx(db *badger.DB, w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	err := r.ParseMultipartForm(PARSEFORM_LIM)
+	if logErrorHttp(w, r, err) {
+		return
+	}
+	multipartFormData := r.MultipartForm
+	if len(multipartFormData.File["file"]) > 1 {
+		if logErrorHttp(w, r, errors.New("error, no se acepta mas de 1 archivo")) {
+			return
+		}
+	}
+	var inscritos []Inscrito
+
+	uploadedFile, err := multipartFormData.File["file"][0].Open() //uploadedFile
+	if logErrorHttp(w, r, err) {
+		return
+	}
+	f, err := excelize.OpenReader(uploadedFile, excelize.Options{
+		RawCellValue: true,
+	})
+	if logErrorHttp(w, r, err) {
+		return
+	}
+
+	rowsRaw, err := f.GetRows("Inscritos", excelize.Options{
+		RawCellValue: true,
+	})
+	if logErrorHttp(w, r, err) {
+		return
+	}
+
+	rows := normalizarRows(rowsRaw, 10)
+
+	for i := 1; i < len(rows); i++ {
+		key, err := strconv.ParseUint(rows[i][0], 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		departamento, exists := CONTR_DEPARTAMENTOS[rows[i][6]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear departamentos")) {
+				return
+			}
+		}
+
+		sexo, exists := CONTR_SEXO[rows[i][7]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear sexo")) {
+				return
+			}
+		}
+
+		edad, exists := CONTR_EDAD[rows[i][8]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear edad")) {
+				return
+			}
+		}
+
+		ocupacion, exists := CONTR_OCUPACIONES[rows[i][9]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear ocupacion")) {
+				return
+			}
+		}
+		inscritos = append(inscritos, Inscrito{
+			key,
+			rows[i][1], // NOMBRE
+			rows[i][2], // INST
+			rows[i][3], // CELULAR
+			rows[i][4], // EMAIL
+			rows[i][5], // CI
+			departamento,
+			sexo,
+			edad,
+			ocupacion,
+		})
+	}
+
+	mutex_inscritos.Lock()
+	err = reemplazarTabla(db, INSCRITOS, inscritos)
+	if logErrorHttp(w, r, err) {
+		mutex_inscritos.Unlock()
+		return
+	}
+	GLOBAL_contador_inscritos = uint32(len(inscritos))
+	GLOBAL_inscritos = nil
+	GLOBAL_inscritos = make([]InscritoMas, len(inscritos))
+
+	for i, c := range inscritos {
+		GLOBAL_inscritos[i] = hacerInscritoMas(uint32(i), c)
+	}
+	// AQUI ORDENAR POR FECHA
+	slices.SortFunc(GLOBAL_inscritos, func(a, b InscritoMas) int {
+		return cmp.Compare(b.Inscrito.Key, a.Inscrito.Key)
+	})
+	mutex_inscritos.Unlock()
+
+	w.WriteHeader(http.StatusOK)
 }
 
 /*****************
@@ -1695,4 +1800,117 @@ func ValidateEmailAddress(email string) error {
 	}
 
 	return nil
+}
+
+func normalizarRows(rowsRaw [][]string, w int) [][]string {
+	rows := make([][]string, len(rowsRaw))
+	for i, r := range rowsRaw {
+		rows[i] = make([]string, w)
+		copy(rows[i], r)
+	}
+	return rows
+}
+
+func reemplazarTabla[T Tabla](db *badger.DB, idTabla uint8, data []T) error {
+	//start := time.Now()
+	err := borrarTablaBIG(db, idTabla)
+	if err != nil {
+		return err
+	}
+	//duration := time.Since(start)
+	//fmt.Println("El tiempo que dura la operacion es: ", duration)
+	//start := time.Now()
+	err = insertarVariosRegistrosBIG(db, idTabla, data)
+	if err != nil {
+		return err
+	}
+	//duration := time.Since(start)
+	//fmt.Println("El tiempo que dura la operacion es: ", duration)
+	return nil
+}
+
+func borrarTablaBIG(db *badger.DB, idTabla uint8) error {
+	txn := db.NewTransaction(true)
+	defer txn.Discard()
+	wb := db.NewWriteBatch()
+	defer wb.Cancel()
+	keyCont := make([]byte, 1)
+	valorCero := make([]byte, 4)
+	keyCont[0] = 0b10000000 | idTabla
+	err := wb.Set(keyCont, valorCero)
+	if err != nil {
+		fmt.Println("Error al setear contador de tabla: ", TABLAS[idTabla], " a 0")
+		return err
+	}
+	prefix := make([]byte, 1)
+	prefix[0] = idTabla
+
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer it.Close()
+
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		keyTemp := it.Item().KeyCopy(nil)
+		err := wb.Delete(keyTemp)
+		if err == badger.ErrTxnTooBig {
+			break
+		} else if err != nil {
+			fmt.Println("Error al cargar data a la tabla: ", TABLAS[idTabla])
+			return err
+		}
+	}
+
+	return wb.Flush()
+}
+
+func insertarVariosRegistrosBIG[T Tabla](db *badger.DB, idTabla uint8, data []T) error {
+	txn := db.NewTransaction(true)
+	defer txn.Discard()
+	wb := db.NewWriteBatch()
+	defer wb.Cancel()
+	keyCont := make([]byte, 1)
+	keyCont[0] = 0b10000000 | idTabla // Conseguir el contador de la tabla
+	cont, err := txn.Get(keyCont)
+	if err != nil {
+		fmt.Println("Error al conseguir el contador de tabla: ", TABLAS[idTabla])
+		return err
+	}
+	var valorContador []byte
+	err = cont.Value(func(val []byte) error {
+		valorContador = append([]byte{}, val...)
+		return nil
+	})
+	if err != nil {
+		fmt.Println("Error al conseguir contador item tabla: ", TABLAS[idTabla])
+		return err
+	}
+
+	for _, d := range data {
+		var dataBytes bytes.Buffer
+		enc := gob.NewEncoder(&dataBytes)
+		err = enc.Encode(d)
+		if err != nil {
+			fmt.Println("Error al serializar informacion para tabla: ", TABLAS[idTabla])
+			return err
+		}
+		keyNvoRegistro := make([]byte, 5)
+		keyNvoRegistro[0] = idTabla
+		keyNvoRegistro[1] = valorContador[0]
+		keyNvoRegistro[2] = valorContador[1]
+		keyNvoRegistro[3] = valorContador[2]
+		keyNvoRegistro[4] = valorContador[3]
+		err = wb.Set(keyNvoRegistro, dataBytes.Bytes())
+		if err != nil {
+			fmt.Println("Error al cargar data a la tabla: ", TABLAS[idTabla])
+			return err
+		}
+		tempId := uint32(valorContador[0])<<24 | uint32(valorContador[1])<<16 | uint32(valorContador[2])<<8 | uint32(valorContador[3])
+		valorContador = IntToBytes(tempId + 1)
+	}
+
+	err = wb.Set(keyCont, valorContador)
+	if err != nil {
+		fmt.Println("Error al aumentar contador de tabla: ", TABLAS[idTabla], " a nuevo valor")
+		return err
+	}
+	return wb.Flush()
 }

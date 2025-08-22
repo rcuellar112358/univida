@@ -49,6 +49,9 @@
         </div>
         <div class="div-1">
             <a href="/exportar-inscritos-xlsx" id="btn-exportar" class="boton-grande-svg">EXPORTAR <img src="/static/img/excel.svg" alt="excel"></a>
+            {{if .EsAdmin}}
+            <div id="btn-importar" class="boton-grande-svg">IMPORTAR <img src="/static/img/excel.svg" alt="excel"></div>
+            {{end}}
         </div>
         <div id="mensaje-error" class="no-mostrar">
             ERROR: Archivo incorrecto, no cumple el formato
@@ -110,9 +113,16 @@
     })
 
 
+    const btnImportar = document.getElementById("btn-importar")
     const importacion = document.getElementById("importacion")
     const msgError = document.getElementById("mensaje-error")
     const contTabla = document.querySelector(".contenedor-tabla")
+
+    btnImportar.onclick = () => {
+        if (confirm("¿Realmente desea importar datos? Se sobreescribirán los datos existentes")) {
+            importacion.click()
+        }
+    }
 
     importacion.onchange = () => {
         if (importacion.files[0].type.startsWith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
