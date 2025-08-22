@@ -381,6 +381,7 @@ func main() {
 							if err == nil {
 								break
 							}
+							fmt.Println("Error al enviar correo: ", GLOBAL_inscritos[i].Inscrito.Email)
 							intentos--
 						}
 						GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 = true
@@ -2000,12 +2001,12 @@ func str2Bool(str string) bool {
 func enviarCorreo(ins Inscrito) error {
 	auth := smtp.PlainAuth("", CORREO_REMITENTE, PASS_CORREO, SMTP_HOST)
 	msg := fmt.Sprintf(`From: %s
-			To: %s
-			Subject: %s
-			MIME-Version: 1.0
-			Content-Type: text/html; charset=UTF-8
+To: %s
+Subject: %s
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
 
-			%s`, CORREO_REMITENTE, ins.Email, SUBJECT1, fmt.Sprintf(BODY1, ins.Nombre))
+%s`, CORREO_REMITENTE, ins.Email, SUBJECT1, fmt.Sprintf(BODY1, ins.Nombre))
 
 	// Send the email.
 	return smtp.SendMail(SMTP_HOST+":587", auth, CORREO_REMITENTE, []string{ins.Email}, []byte(msg))
