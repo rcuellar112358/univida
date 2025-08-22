@@ -47,71 +47,67 @@ const (
 	PASS_CORREO                         = "6#RzX43|w@Ye"
 	SMTP_HOST                           = "buzon.dinamicamedialab.com"
 	SUBJECT1                            = `Confirmación de Recepción de Inscripción al Webinar "UNIVIDA S.A. 10 AÑOS, TRANSFORMANDO VIDAS: ACIERTOS Y NUEVAS NECESIDADES DE SEGUROS EN SECTORES VULNERABLES Y POPULARES DE BOLIVIA"`
-	BODY1                               = `Hola %s,
+	BODY1                               = `<!DOCTYPE html>
+<html>
 
-Gracias por inscribirte a nuestro próximo webinar. Hemos recibido tu solicitud correctamente y estamos encantados de contar contigo.
+<body>
+    </div>
+	    <div style="text-align: center;">
+        <div style="justify-content: center; display: flex;"><img style="margin: auto; margin-top: 2rem;" width=600
+                alt="matricula" src="https://dinamicamedialab.com/assets/img/correoUnividaImg5.png">
+        </div>
+    </div>
+    </div>
+	    <div style="text-align: center;">
+        <div style="justify-content: center; display: flex;"><img style="margin: auto; margin-top: 2rem;" width=600
+                alt="matricula" src="https://dinamicamedialab.com/assets/img/correoUnividaImg3.png">
+        </div>
+    </div>
+    <div
+        style="color: #333333; border: 1px solid #e6e6e6; padding: 2rem; border-radius: 2rem; max-width:600px; background-color: #fafafa; margin: 1rem auto; text-align: justify;">
+        <p>Hola %s,</p>
+		<p>Gracias por inscribirte a nuestro próximo webinar. Hemos recibido tu solicitud correctamente y estamos encantados de contar contigo.</p>
+		<p>A continuación, te compartimos la información general del evento:</p>
+		<p>Tema del webinar: "UNIVIDA S.A. 10 AÑOS, TRANSFORMANDO VIDAS: ACIERTOS Y NUEVAS NECESIDADES DE SEGUROS EN SECTORES VULNERABLES Y POPULARES DE BOLIVIA".</p>
+		<p>Fecha Webinar I: Miércoles, 3 de Septiembre.</p>
+		<p>Fecha Webinar II: Viernes, 5 de Septiembre.</p>
+		<p>Hora: 10:00 - 12:00.</p>
+		<p>Plataforma: La sesión se llevará a cabo a través de WEBEX</p>
+		<p>Para garantizar que tu experiencia en nuestro webinar a través de la plataforma Cisco Webex sea óptima y sin contratiempos, es fundamental que verifiques que tu equipo cumple con los siguientes requisitos técnicos y de hardware.</p>
+		<p>1. Requisitos de Conectividad y Sistema</p>
+		<p>Conexión a Internet: Es el factor más crítico. Se recomienda una conexión de banda ancha estable con al menos 10-25 Mbps de velocidad de subida y bajada para una experiencia de video de alta calidad. Puedes realizar una prueba de velocidad en sitios como speedtest.net.</p>
+		<p>Navegadores Web Compatibles (para unirse desde el navegador):</p>
+		<p>Google Chrome (versiones más recientes)</p>
+		<p>Mozilla Firefox (versiones más recientes)</p>
+		<p>Microsoft Edge (versiones más recientes)</p>
+		<p>Nota: Safari tiene funcionalidades limitadas. Se recomienda utilizar Chrome o Firefox para acceso completo.</p>
+		<p>2. Requisitos de Hardware</p>
+		<p>Computadora:</p>
+		<p>PC: Windows 10 o 11.</p>
+		<p>Mac: macOS 10.15 (Catalina) o superior.</p>
+		<p>Audio:</p>
+		<p>Obligatorio: Altavoces o auriculares para escuchar la sesión.</p>
+		<p>Recomendado: Un micrófono integrado (en la laptop o auriculares) o externo si deseas participar con audio.</p>
+		<p>Video (Opcional pero recomendado):</p>
+		<p>Una cámara web integrada o externa si deseas activar tu video durante la sesión.</p>
+		<p>3. Opciones de Participación</p>
+		<p>Aplicación de Escritorio (Recomendada): Para la mejor experiencia, con todas las funcionalidades (vista de galería, controles avanzados, etc.), te sugerimos descargar e instalar la aplicación de Webex Meetings con antelación. Es gratuita y está disponible para Windows y Mac.</p>
+		<p>Enlace de descarga: https://www.webex.com/downloads.html</p>
+		<p>Desde el Navegador Web: Puedes unirte directamente desde Chrome, Firefox o Edge sin necesidad de instalar la aplicación, aunque algunas funciones podrían estar limitadas.</p>
+		<p>Dispositivos Móviles: La aplicación Webex está disponible para iOS y Android en sus respectivas tiendas de aplicaciones.</p>
+		<p>Una vez confirmados los detalles definitivos (incluyendo fecha, hora, enlace de acceso y agenda específica), te enviaremos un correo 72 horas de antelacion con toda la información necesaria para que puedas unirte sin inconvenientes.</p>
+		<p>Si tienes alguna pregunta o necesitas assistance adicional, no dudes en contactarnos respondiendo a este correo.</p>
+		<p>¡Esperamos que este webinar sea de gran valor para ti!</p>
+		<p>Saludos cordiales</p>
+    </div>
+    <div style="text-align: center;">
+        <div style="justify-content: center; display: flex;"><img style="margin: auto; margin-top: 2rem;" width=800
+                alt="matricula" src="https://dinamicamedialab.com/assets/img/correoUnividaImg4.png">
+        </div>
+    </div>
+</body>
 
-A continuación, te compartimos la información general del evento:
-
-Tema del webinar: "UNIVIDA S.A. 10 AÑOS, TRANSFORMANDO VIDAS: ACIERTOS Y NUEVAS NECESIDADES DE SEGUROS EN SECTORES VULNERABLES Y POPULARES DE BOLIVIA".
-
-Fecha Webinar I: Miércoles, 3 de Septiembre.
-Fecha Webinar II: Viernes, 5 de Septiembre.
-
-Hora: 10:00 - 12:00.
-
-Plataforma: La sesión se llevará a cabo a través de WEBEX
-
-Para garantizar que tu experiencia en nuestro webinar a través de la plataforma Cisco Webex sea óptima y sin contratiempos, es fundamental que verifiques que tu equipo cumple con los siguientes requisitos técnicos y de hardware.
-
-1. Requisitos de Conectividad y Sistema
-Conexión a Internet: Es el factor más crítico. Se recomienda una conexión de banda ancha estable con al menos 10-25 Mbps de velocidad de subida y bajada para una experiencia de video de alta calidad. Puedes realizar una prueba de velocidad en sitios como speedtest.net.
-
-Navegadores Web Compatibles (para unirse desde el navegador):
-
-Google Chrome (versiones más recientes)
-
-Mozilla Firefox (versiones más recientes)
-
-Microsoft Edge (versiones más recientes)
-
-Nota: Safari tiene funcionalidades limitadas. Se recomienda utilizar Chrome o Firefox para acceso completo.
-
-2. Requisitos de Hardware
-Computadora:
-
-PC: Windows 10 o 11.
-
-Mac: macOS 10.15 (Catalina) o superior.
-
-Audio:
-
-Obligatorio: Altavoces o auriculares para escuchar la sesión.
-
-Recomendado: Un micrófono integrado (en la laptop o auriculares) o externo si deseas participar con audio.
-
-Video (Opcional pero recomendado):
-
-Una cámara web integrada o externa si deseas activar tu video durante la sesión.
-
-3. Opciones de Participación
-Aplicación de Escritorio (Recomendada): Para la mejor experiencia, con todas las funcionalidades (vista de galería, controles avanzados, etc.), te sugerimos descargar e instalar la aplicación de Webex Meetings con antelación. Es gratuita y está disponible para Windows y Mac.
-
-Enlace de descarga: https://www.webex.com/downloads.html
-
-Desde el Navegador Web: Puedes unirte directamente desde Chrome, Firefox o Edge sin necesidad de instalar la aplicación, aunque algunas funciones podrían estar limitadas.
-
-Dispositivos Móviles: La aplicación Webex está disponible para iOS y Android en sus respectivas tiendas de aplicaciones.
-
-
-
-Una vez confirmados los detalles definitivos (incluyendo fecha, hora, enlace de acceso y agenda específica), te enviaremos un correo 72 horas de antelacion con toda la información necesaria para que puedas unirte sin inconvenientes.
-
-Si tienes alguna pregunta o necesitas assistance adicional, no dudes en contactarnos respondiendo a este correo.
-
-¡Esperamos que este webinar sea de gran valor para ti!
-
-Saludos cordiales,`
+</html>`
 )
 
 var LA_PAZ_TZ *time.Location
@@ -543,13 +539,17 @@ func postEnviarInscripcion(db *badger.DB) http.HandlerFunc {
 
 		// Compose the message.
 		// Note: The headers and body must be separated by a blank line.
-		msg := []byte("To: " + correoDestino + "\r\n" +
-			"Subject: " + SUBJECT1 + "\r\n" +
-			"\r\n" +
-			fmt.Sprintf(BODY1, nombreInscrito) + "\r\n")
+
+		msg := fmt.Sprintf(`From: %s
+To: %s
+Subject: %s
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+
+%s`, CORREO_REMITENTE, correoDestino, SUBJECT1, fmt.Sprintf(BODY1, nombreInscrito))
 
 		// Send the email.
-		err = smtp.SendMail(SMTP_HOST+":587", auth, CORREO_REMITENTE, []string{correoDestino}, msg)
+		err = smtp.SendMail(SMTP_HOST+":587", auth, CORREO_REMITENTE, []string{correoDestino}, []byte(msg))
 		if logErrorHttp(w, r, err) {
 			return
 		}
