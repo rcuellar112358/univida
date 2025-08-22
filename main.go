@@ -344,6 +344,7 @@ func main() {
 	muxAdmin.HandleFunc("GET /inscritos", esAuth(handleAdminInscritos, P_ALL))
 	muxAdmin.HandleFunc("GET /inscritos/", esAuth(handleAdminInscritosPag, P_ALL))
 	muxAdmin.HandleFunc("GET /ver-datos/", esAuth(handleAdminVerDatos, P_ALL))
+	muxAdmin.HandleFunc("GET /eliminar-inscrito/", esAuthDB(db, handleAdminEliminarInscrito, P_ALL))
 
 	muxAdmin.HandleFunc("GET /exportar-inscritos-xlsx", esAuth(handleExportarInscritosXlsx, P_ALL))
 	muxAdmin.HandleFunc("POST /importar-inscritos-xlsx", esAuthDB(db, postImportarInscritosXlsx, P_ALL))
@@ -931,6 +932,45 @@ func handleAdminVerDatos(w http.ResponseWriter, r *http.Request, usuario *Usuari
 		"UsuarioLogged": usuario,
 		"EsAdmin":       usuario.Usuario.IdPerfil == PERFIL_ADMIN,
 	})
+}
+
+func handleAdminEliminarInscrito(db *badger.DB, w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	intID, err := urlId(r.URL.Path)
+	if logErrorHttp(w, r, err) {
+		return
+	}
+
+	mutex_inscritos.Lock()
+
+	var pos uint32
+	seEncontro := false
+	for i := range GLOBAL_inscritos {
+		if GLOBAL_inscritos[i].Id == intID {
+			pos = uint32(i)
+			seEncontro = true
+			break
+		}
+	}
+
+	if !seEncontro {
+		mutex_inscritos.Unlock()
+		http.NotFound(w, r)
+		return
+	}
+
+	err = db.Update(func(txn *badger.Txn) error {
+		return txn.Delete(crearIdBytes(INSCRITOS, intID))
+	})
+	if logErrorHttp(w, r, err) {
+		mutex_inscritos.Unlock()
+		return
+	}
+
+	GLOBAL_inscritos = append(GLOBAL_inscritos[:pos], GLOBAL_inscritos[pos+1:]...)
+	mutex_inscritos.Unlock()
+
+	w.Header().Set("Cache-Control", "no-store") // IMPORTANTE PARA EVITAR COMPORTAMIENTO NO DESEADO DEL NAVEGADOR
+	http.Redirect(w, r, "/inscritos", http.StatusPermanentRedirect)
 }
 
 func handleExportarInscritosXlsx(w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
