@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"crypto/rand"
 	"crypto/sha512"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/hex"
@@ -364,6 +365,14 @@ func main() {
 	servAdmin := &http.Server{Addr: puertoServAdmin, Handler: muxAdmin}
 	//go http.ListenAndServe(":80", http.HandlerFunc(redirect))
 
+	config := EmailConfig{
+		ZimbraHost: SMTP_HOST,        // Replace with your Zimbra server
+		ZimbraPort: "587",            // Use 587 for STARTTLS or 465 for SSL/TLS
+		Username:   CORREO_REMITENTE, // Your Zimbra email
+		Password:   PASS_CORREO,      // Your Zimbra password
+		UseTLS:     true,             // true for STARTTLS, false for direct SSL/TLS
+	}
+
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop() // Ensure the ticker is stopped when main exits
 
@@ -377,11 +386,18 @@ func main() {
 					go func() {
 						intentos := 5
 						for intentos > 0 && !GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 {
-							err := enviarCorreo(GLOBAL_inscritos[i].Inscrito)
+							message := EmailMessage{
+								From:    CORREO_REMITENTE,
+								To:      []string{GLOBAL_inscritos[i].Inscrito.Email},
+								Subject: SUBJECT1,
+								Body:    fmt.Sprintf(BODY1, GLOBAL_inscritos[i].Inscrito.Nombre),
+								IsHTML:  true, // Set to true if sending HTML content
+							}
+							err := SendEmail(config, message)
 							if err == nil {
 								break
 							}
-							fmt.Println("Error al enviar correo: ", GLOBAL_inscritos[i].Inscrito.Email)
+							fmt.Println("Error al enviar correo: ", GLOBAL_inscritos[i].Inscrito.Email, " ERROR: ", err)
 							intentos--
 						}
 						GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 = true
@@ -1998,16 +2014,160 @@ func str2Bool(str string) bool {
 	return str == "SI"
 }
 
-func enviarCorreo(ins Inscrito) error {
-	auth := smtp.PlainAuth("", CORREO_REMITENTE, PASS_CORREO, SMTP_HOST)
-	msg := fmt.Sprintf(`From: %s
-To: %s
-Subject: %s
-MIME-Version: 1.0
-Content-Type: text/html; charset=UTF-8
+// EmailConfig holds the configuration for sending emails
+type EmailConfig struct {
+	ZimbraHost string // e.g., "mail.yourdomain.com"
+	ZimbraPort string // typically "587" for STARTTLS or "465" for SSL/TLS
+	Username   string // your zimbra email address
+	Password   string // your zimbra password
+	UseTLS     bool   // true for STARTTLS (port 587), false for SSL/TLS (port 465)
+}
 
-%s`, CORREO_REMITENTE, ins.Email, SUBJECT1, fmt.Sprintf(BODY1, ins.Nombre))
+// EmailMessage represents the email to be sent
+type EmailMessage struct {
+	From    string
+	To      []string
+	Cc      []string
+	Bcc     []string
+	Subject string
+	Body    string
+	IsHTML  bool
+}
 
-	// Send the email.
-	return smtp.SendMail(SMTP_HOST+":587", auth, CORREO_REMITENTE, []string{ins.Email}, []byte(msg))
+// SendEmail sends an email from Zimbra server to any domain including Gmail
+func SendEmail(config EmailConfig, message EmailMessage) error {
+	// Validate inputs
+	if config.ZimbraHost == "" || config.Username == "" || config.Password == "" {
+		return fmt.Errorf("zimbra host, username, and password are required")
+	}
+
+	if len(message.To) == 0 {
+		return fmt.Errorf("at least one recipient is required")
+	}
+
+	// Set default port if not provided
+	if config.ZimbraPort == "" {
+		if config.UseTLS {
+			config.ZimbraPort = "587"
+		} else {
+			config.ZimbraPort = "465"
+		}
+	}
+
+	// Create server address
+	serverAddr := config.ZimbraHost + ":" + config.ZimbraPort
+
+	// Set up authentication
+	auth := smtp.PlainAuth("", config.Username, config.Password, config.ZimbraHost)
+
+	// Prepare recipients list (combine To, Cc, Bcc)
+	var allRecipients []string
+	allRecipients = append(allRecipients, message.To...)
+	allRecipients = append(allRecipients, message.Cc...)
+	allRecipients = append(allRecipients, message.Bcc...)
+
+	// Build the email message
+	emailBody := buildEmailMessage(message)
+
+	// Send email based on TLS configuration
+	if config.UseTLS {
+		// Use STARTTLS (typically port 587)
+		return sendWithSTARTTLS(serverAddr, auth, message.From, allRecipients, emailBody)
+	} else {
+		// Use SSL/TLS (typically port 465)
+		return sendWithTLS(serverAddr, auth, message.From, allRecipients, emailBody)
+	}
+}
+
+// sendWithSTARTTLS sends email using STARTTLS
+func sendWithSTARTTLS(serverAddr string, auth smtp.Auth, from string, to []string, body []byte) error {
+	return smtp.SendMail(serverAddr, auth, from, to, body)
+}
+
+// sendWithTLS sends email using direct TLS connection
+func sendWithTLS(serverAddr string, auth smtp.Auth, from string, to []string, body []byte) error {
+	// Create TLS connection
+	tlsConfig := &tls.Config{
+		ServerName: strings.Split(serverAddr, ":")[0],
+	}
+
+	conn, err := tls.Dial("tcp", serverAddr, tlsConfig)
+	if err != nil {
+		return fmt.Errorf("failed to connect with TLS: %w", err)
+	}
+	defer conn.Close()
+
+	// Create SMTP client
+	client, err := smtp.NewClient(conn, tlsConfig.ServerName)
+	if err != nil {
+		return fmt.Errorf("failed to create SMTP client: %w", err)
+	}
+	defer client.Quit()
+
+	// Authenticate
+	if err = client.Auth(auth); err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+
+	// Set sender
+	if err = client.Mail(from); err != nil {
+		return fmt.Errorf("failed to set sender: %w", err)
+	}
+
+	// Set recipients
+	for _, recipient := range to {
+		if err = client.Rcpt(recipient); err != nil {
+			return fmt.Errorf("failed to set recipient %s: %w", recipient, err)
+		}
+	}
+
+	// Send the email body
+	writer, err := client.Data()
+	if err != nil {
+		return fmt.Errorf("failed to get data writer: %w", err)
+	}
+
+	_, err = writer.Write(body)
+	if err != nil {
+		return fmt.Errorf("failed to write email body: %w", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close data writer: %w", err)
+	}
+
+	return nil
+}
+
+// buildEmailMessage constructs the email message with proper headers
+func buildEmailMessage(message EmailMessage) []byte {
+	var msg strings.Builder
+
+	// Required headers
+	msg.WriteString(fmt.Sprintf("From: %s\r\n", message.From))
+	msg.WriteString(fmt.Sprintf("To: %s\r\n", strings.Join(message.To, ", ")))
+
+	// Optional headers
+	if len(message.Cc) > 0 {
+		msg.WriteString(fmt.Sprintf("Cc: %s\r\n", strings.Join(message.Cc, ", ")))
+	}
+
+	msg.WriteString(fmt.Sprintf("Subject: %s\r\n", message.Subject))
+
+	// Content type
+	if message.IsHTML {
+		msg.WriteString("MIME-Version: 1.0\r\n")
+		msg.WriteString("Content-Type: text/html; charset=UTF-8\r\n")
+	} else {
+		msg.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
+	}
+
+	// Empty line to separate headers from body
+	msg.WriteString("\r\n")
+
+	// Message body
+	msg.WriteString(message.Body)
+
+	return []byte(msg.String())
 }
