@@ -147,8 +147,8 @@ type TablaMas interface {
 }
 
 var USUARIOS_0 = []Usuario{
-	{1, PERFIL_ADMIN, "admin", "admin", PASS_DEFAULT},
-	{2, PERFIL_USUARIO, "usuario_univida_1", "usuario_univida_1", PASS_DEFAULT},
+	{1, PERFIL_ADMIN, "admin", "admin", "347018e671e216d6c0fb9f1b9c0316e6ad53067815b99a40e2e66a7229fc403f9508be43d752d387c362dbf6c969c137818064398f18b5a6bd1cb3130e114f57"},
+	{2, PERFIL_USUARIO, "usuario_univida_1", "usuario_univida_1", "928a876997efe2c625821b3679bd3fc58d23bf34bc2998cae304deb52d24108a9959d4464158a008ff18f13084f35931f1e2b005411072bb9e2f2f8bb3d38147"},
 }
 
 const (
