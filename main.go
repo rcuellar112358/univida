@@ -364,7 +364,7 @@ func main() {
 	servAdmin := &http.Server{Addr: puertoServAdmin, Handler: muxAdmin}
 	//go http.ListenAndServe(":80", http.HandlerFunc(redirect))
 
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop() // Ensure the ticker is stopped when main exits
 
 	// Start a goroutine to perform the periodic task
@@ -372,6 +372,7 @@ func main() {
 		for range ticker.C {
 			// This code will execute every 5 minutes
 			fmt.Println("Se enviara correos:", time.Now())
+			conteo := 0
 			for i := range GLOBAL_inscritos {
 				if !GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 {
 					go func() {
@@ -385,9 +386,11 @@ func main() {
 							intentos--
 						}
 						GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 = true
+						conteo++
 					}()
 				}
 			}
+			fmt.Println("Se envio ", conteo, " correos")
 		}
 	}()
 
