@@ -121,10 +121,21 @@
 
         #col-1 {
             width: 55%;
-            background-image: url('/static/img/fondoLetrasUnivida.png');
-            background-size: 100% auto;
-            background-position: 50% 50%;
+            background-image: url('/static/img/escudo.png');
+            background-size: 60% auto;
+            background-position: 50% 65%;
             background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        #head-col-1{
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            justify-content: space-between;
         }
 
         #col-2 {
@@ -139,7 +150,6 @@
             width: 100%;
             justify-content: space-between;
             display: flex;
-            height: 20%;
             padding: 4rem 4rem 0 4rem;
         }
 
@@ -159,8 +169,6 @@
             display: flex;
             align-items: center;
             color: white;
-            justify-content: top;
-            padding-top: 3rem;
             gap: 1rem;
             text-align: center;
             flex-direction: column;
@@ -170,17 +178,31 @@
 
         #texto-form h3 {
             font-weight: 900;
-            font-size: 4.5rem;
-            line-height: 4rem;
-            text-shadow: 1px 3px 0 hsl(0, 0%, 20%), 1px 13px 5px hsl(0, 0%, 20%);
+            font-size: 1.8rem;
+            line-height: 1.6rem;
         }
 
         #texto-form h4 {
             font-family: fuenteEspecial;
             font-weight: 500;
+            font-size: 3.8rem;
+            line-height: 3.6rem;
+            text-shadow: 1px 3px 0 hsl(0, 0%, 20%), 1px 13px 5px hsl(0, 0%, 20%);
+        }
+
+        #texto-form h5 {
+            font-family: fuenteEspecial;
+            font-weight: 500;
             color: hsl(43, 100%, 89%);
+            font-size: 3rem;
+            line-height: 2.8rem;
             -webkit-text-stroke-width: 1px;
             -webkit-text-stroke-color: hsl(34, 57%, 62%);
+            text-shadow: 1px 3px 0 hsl(0, 0%, 20%), 1px 13px 5px hsl(0, 0%, 20%);
+        }
+
+        #texto-form>p {
+            text-shadow: 1px 3px 0 hsl(0, 0%, 20%), 1px 13px 5px hsl(0, 0%, 20%);
         }
 
         #form {
@@ -254,9 +276,10 @@
 
             #contenido {
                 background-image: url('/static/img/fondoLetrasUnivida.png');
-                background-size: cover;
+                background-size: 90% auto;
                 background-position: 50% 50%;
                 background-repeat: no-repeat;
+                background-color: hsl(224, 38%, 19%);
             }
         }
 
@@ -381,49 +404,50 @@
             pointer-events: none;
         }
 
-        #form.bloquear p{
+        #form.bloquear p {
             color: grey;
         }
 
         .spinner {
             display: none;
-            width: 1rem; 
-            height: 1rem; 
-            border: .2rem solid rgba(0, 0, 0, 0.1); 
-            border-top-color: #3498db; 
+            width: 1rem;
+            height: 1rem;
+            border: .2rem solid rgba(0, 0, 0, 0.1);
+            border-top-color: #3498db;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
         }
 
-        #form.bloquear #btn-enviar{
+        #form.bloquear #btn-enviar {
             background-color: grey;
         }
 
-        #form.bloquear .spinner{
+        #form.bloquear .spinner {
             display: block;
         }
 
-        #btn-enviar-h{
+        #btn-enviar-h {
             display: none;
         }
 
-        #pie-col-1{
+        #pie-col-1 {
             text-align: center;
             color: white;
-            margin-top: 4rem;
+            padding-bottom: 2rem;
         }
 
-        #pie-col-1 h4{
+        #pie-col-1 h4 {
             font-size: 1.3rem;
             font-style: oblique;
         }
 
-        #pie-notas{
+        #pie-notas {
             display: flex;
             font-size: 1.1rem;
             justify-content: center;
@@ -431,7 +455,7 @@
             margin-top: 1rem;
         }
 
-        .con-punto{
+        .con-punto {
             position: relative;
             padding-left: 2.5rem;
             align-items: center;
@@ -440,7 +464,7 @@
             justify-content: center;
         }
 
-        .con-punto::before{
+        .con-punto::before {
             position: absolute;
             top: .9rem;
             left: 0;
@@ -451,51 +475,53 @@
             border-radius: 50%;
         }
 
-        #pie-notas>h5{
+        #pie-notas>h5 {
             max-width: 10rem;
             color: hsl(45, 86%, 88%);
             font-size: 1.3rem;
         }
 
-        #linea-blanca{
+        #linea-blanca {
             border-right: 1px solid white;
             padding-right: 1rem;
         }
 
-        #logos-pie{
+        #logos-pie {
             display: flex;
             justify-content: center;
             gap: 1rem;
             margin-top: 1rem;
         }
 
-        #logos-pie>div{
+        #logos-pie>div {
             width: fit-content;
             height: 4rem;
         }
 
-        #logos-pie img{
+        #logos-pie img {
             height: 100%;
             width: unset;
         }
 
-        @media(width < 35rem){
-            #pie-notas{
+        @media(width < 35rem) {
+            #pie-notas {
                 flex-direction: column;
                 align-items: center;
             }
-            .con-punto{
+
+            .con-punto {
                 max-width: fit-content;
             }
-            .con-punto::before{
+
+            .con-punto::before {
                 top: 0;
             }
 
-            #texto-form{
+            #texto-form {
                 padding-top: 0;
             }
 
-            #linea-blanca{
+            #linea-blanca {
                 border: none;
             }
         }
@@ -506,16 +532,17 @@
 <body>
     <div id="contenido">
         <div id="col-1">
-            <div id="logos-form">
-                <div><img src="/static/img/logoUnivida.svg" alt="logo"></div>
-                <div><img src="/static/img/logo200.svg" alt="logo"></div>
-            </div>
-            <div id="texto-form">
-                <h3>III</h3>
-                <h3>CICLO DE SEMINARIOS</h3>
-                <h4>2025 MODALIDAD VIRTUAL</h4>
-                <p>“<b>UNIVIDA S.A.</b> 10 Años transformando vidas: aciertos y nuevas necesidades de seguros en
-                    sectores vulnerables y populares de Bolivia”</p>
+            <div id="head-col-1">
+                <div id="logos-form">
+                    <div><img src="/static/img/logoUnivida.svg" alt="logo"></div>
+                    <div><img src="/static/img/logo200.svg" alt="logo"></div>
+                </div>
+                <div id="texto-form">
+                    <h3>CICLO DE WEBINARS</h3>
+                    <h4>UNIVIDA S.A. 10 AÑOS</h4>
+                    <h5>TRANSFORMANDO VIDAS:</h5>
+                    <p>ACIERTOS Y NUEVAS NECESIDADES DE SEGUROS EN SECTORES VULNERABLES Y POPULARES DE BOLIVIA”</p>
+                </div>
             </div>
             <div id="pie-col-1">
                 <h4>Certificación con valor curricular</h4>
@@ -554,7 +581,7 @@
                     <input required type="text" name="celular" id="celular">
                 </div>
                 <div class="w50">
-                    <p>Sexo / Género *</p>
+                    <p>Género *</p>
                     <select required name="sexo" id="sexo">
                         <option value=""></option>
                         {{range $key, $sexo := .SEXO}}
@@ -604,7 +631,8 @@
                     <input type="hidden" name="captcha-id" id="captcha-id" value="{{.IdCaptcha}}">
                 </div>
                 <div>
-                    <div id="btn-enviar">Enviar Inscripción<div class="spinner"></div></div>
+                    <div id="btn-enviar">Enviar Inscripción<div class="spinner"></div>
+                    </div>
                 </div>
                 <input type="submit" id="btn-enviar-h">
             </form>
@@ -697,7 +725,7 @@
 
         const btnEnviar = document.getElementById("btn-enviar")
         const btnEnviarH = document.getElementById("btn-enviar-h")
-        btnEnviar.onclick = ()=>{
+        btnEnviar.onclick = () => {
             btnEnviarH.click()
         }
     </script>
