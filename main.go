@@ -1197,7 +1197,7 @@ func postImportarInscritosXlsx(db *badger.DB, w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	rows := normalizarRows(rowsRaw, 11)
+	rows := normalizarRows(rowsRaw, 13)
 
 	for i := 1; i < len(rows); i++ {
 		key, err := strconv.ParseUint(rows[i][0], 10, 64)
