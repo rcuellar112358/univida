@@ -1,0 +1,83 @@
+{{define "titulo"}}Configuración{{end}}
+{{define "css_extra"}}
+<style>
+    .parrafo {
+        max-width: 100rem;
+        width: fit-content;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .parrafo>div {
+        display: flex;
+        margin-bottom: 1rem;
+    }
+
+    .parrafo .label {
+        width: 20rem;
+        font-weight: 700;
+    }
+
+    @media(width < 30rem) {
+        .parrafo>div {
+            flex-direction: column;
+        }
+    }
+
+    #form{
+        flex-direction: column;
+    }
+
+    #form>div{
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+        max-width: 40rem;
+        gap: 2rem;
+    }
+
+    #form p{
+        color: white;
+    }
+</style>
+{{end}}
+{{define "contenido"}}
+<div class="parrafo">
+    <form action="/actualizar-configuracion" method="post" id="form" accept="image/*" enctype="multipart/form-data" autocomplete="off">
+        <div>
+            <p>Inscripción habilitada:</p>
+            <input type="checkbox" name="inscripcion" {{if .EstadoInscripcion}}checked{{end}}>
+        </div>
+        <div>
+            <p>Formulario de asistencia I habilitado:</p>
+            <input type="checkbox" name="asistencia-1" {{if .EstadoAsistencia1}}checked{{end}}>
+        </div>
+        <div>
+            <p>Formulario de asistencia II habilitado:</p>
+            <input type="checkbox" name="asistencia-2" {{if .EstadoAsistencia2}}checked{{end}}>
+        </div>
+    </form>
+    <script>
+        document.querySelectorAll("input").forEach(inp =>{
+            inp.onchange = enviarForm
+        })
+        function enviarForm() {
+            let formData = new FormData(form)
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        window.href = "/configuracion"
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error)
+                });
+        }
+
+    </script>
+</div>
+{{end}}

@@ -246,6 +246,8 @@ type Inscrito struct {
 	Edad           uint8
 	Ocupacion      uint8
 	SeEnvioCorreo1 bool
+	Asistencia1    bool
+	Asistencia2    bool
 }
 
 type InscritoMas struct {
@@ -255,6 +257,8 @@ type InscritoMas struct {
 	SexoStr         string
 	EdadStr         string
 	OcupacionStr    string
+	Asistencia1Str  string
+	Asistencia2Str  string
 }
 
 type Sesion struct {
@@ -281,13 +285,11 @@ var mutex_inscritos sync.Mutex
 var GLOBAL_inscritos []InscritoMas
 var GLOBAL_contador_inscritos uint32
 
+var GLOBAL_habilitada_inscripcion = false
+var GLOBAL_habilitada_asistencia_1 = false
+var GLOBAL_habilitada_asistencia_2 = false
+
 func main() {
-	//smtpAddr := SMTP_HOST + ":587" // Replace with your SMTP server address and port
-	//_, err := smtp.Dial(smtpAddr)
-	//if err != nil {
-	//	log.Fatal("Error connecting to SMTP server: ", err)
-	//}
-	//fmt.Printf("Successfully connected to SMTP server at %s\n", smtpAddr)
 	// Sera creada si no existe
 	opcionesDB := badger.DefaultOptions("./db")
 	opcionesDB.ValueLogFileSize = 1<<26 - 1
@@ -319,6 +321,10 @@ func main() {
 	muxPagina.HandleFunc("GET /", handleRoot)
 	muxPagina.HandleFunc("GET /renovar-captcha", handleRenovarCaptcha)
 	muxPagina.HandleFunc("POST /enviar-inscripcion", postEnviarInscripcion(db))
+	muxPagina.HandleFunc("GET /f1bc5a3f1a4b789483800a5979fb581584abd834b4785d823eead8190de0c2b3", handleAsistencia1)
+	muxPagina.HandleFunc("GET /33411753cbe8dd78cd788f7df9ccca7a21ef960acf50206fb86cdf58c0375701", handleAsistencia2)
+	muxPagina.HandleFunc("POST /registro-asistencia-1", postAsistencia(db, 1))
+	muxPagina.HandleFunc("POST /registro-asistencia-2", postAsistencia(db, 2))
 
 	/* ADMIN */
 	P0 := []uint8{PERFIL_ADMIN}
@@ -346,6 +352,9 @@ func main() {
 	muxAdmin.HandleFunc("GET /inscritos/", esAuth(handleAdminInscritosPag, P_ALL))
 	muxAdmin.HandleFunc("GET /ver-datos/", esAuth(handleAdminVerDatos, P_ALL))
 	muxAdmin.HandleFunc("GET /eliminar-inscrito/", esAuthDB(db, handleAdminEliminarInscrito, P_ALL))
+
+	muxAdmin.HandleFunc("GET /configuracion", esAuth(handleAdminConfiguracion, P_ALL))
+	muxAdmin.HandleFunc("POST /actualizar-configuracion", esAuth(postActualizarConfiguracion, P_ALL))
 
 	muxAdmin.HandleFunc("GET /exportar-inscritos-xlsx", esAuth(handleExportarInscritosXlsx, P_ALL))
 	muxAdmin.HandleFunc("POST /importar-inscritos-xlsx", esAuthDB(db, postImportarInscritosXlsx, P_ALL))
@@ -379,29 +388,31 @@ func main() {
 	// Start a goroutine to perform the periodic task
 	go func() {
 		for range ticker.C {
-			// This code will execute every 5 minutes
-			fmt.Println("Se enviara correos:", time.Now())
-			for i := range GLOBAL_inscritos {
-				if !GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 {
-					go func() {
-						intentos := 5
-						for intentos > 0 && !GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 {
-							message := EmailMessage{
-								From:    CORREO_REMITENTE,
-								To:      []string{GLOBAL_inscritos[i].Inscrito.Email},
-								Subject: SUBJECT1,
-								Body:    fmt.Sprintf(BODY1, GLOBAL_inscritos[i].Inscrito.Nombre),
-								IsHTML:  true, // Set to true if sending HTML content
+			if GLOBAL_habilitada_inscripcion {
+				// This code will execute every 5 minutes
+				fmt.Println("Se enviara correos:", time.Now())
+				for i := range GLOBAL_inscritos {
+					if !GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 {
+						go func() {
+							intentos := 5
+							for intentos > 0 && !GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 {
+								message := EmailMessage{
+									From:    CORREO_REMITENTE,
+									To:      []string{GLOBAL_inscritos[i].Inscrito.Email},
+									Subject: SUBJECT1,
+									Body:    fmt.Sprintf(BODY1, GLOBAL_inscritos[i].Inscrito.Nombre),
+									IsHTML:  true, // Set to true if sending HTML content
+								}
+								err := SendEmail(config, message)
+								if err == nil {
+									break
+								}
+								fmt.Println("Error al enviar correo: ", GLOBAL_inscritos[i].Inscrito.Email, " ERROR: ", err)
+								intentos--
 							}
-							err := SendEmail(config, message)
-							if err == nil {
-								break
-							}
-							fmt.Println("Error al enviar correo: ", GLOBAL_inscritos[i].Inscrito.Email, " ERROR: ", err)
-							intentos--
-						}
-						GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 = true
-					}()
+							GLOBAL_inscritos[i].Inscrito.SeEnvioCorreo1 = true
+						}()
+					}
 				}
 			}
 		}
@@ -420,22 +431,26 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 	} else {
-		driver := base64Captcha.NewDriverDigit(100, 240, 4, 0.7, 80)
-		captcha := base64Captcha.NewCaptcha(driver, base64Captcha.DefaultMemStore)
-		idCaptcha, b64s, respuestaCaptcha, err := captcha.Generate()
-		if logErrorHttp(w, r, err) {
-			return
-		}
-		if len(captchasEmitidos) < MAX_CAPTCHAS_EMITIDOS {
-			captchasEmitidos = append(captchasEmitidos, CaptchaEmitido{idCaptcha, respuestaCaptcha, time.Now()})
-			renderPlantillaSimple(w, "frontend", "index", map[string]any{
-				"DEPARTAMENTOS": DEPARTAMENTOS,
-				"SEXO":          SEXO,
-				"OCUPACIONES":   OCUPACIONES,
-				"EDAD":          EDAD,
-				"ImagenCaptcha": template.URL(b64s),
-				"IdCaptcha":     idCaptcha,
-			})
+		if GLOBAL_habilitada_inscripcion {
+			driver := base64Captcha.NewDriverDigit(100, 240, 4, 0.7, 80)
+			captcha := base64Captcha.NewCaptcha(driver, base64Captcha.DefaultMemStore)
+			idCaptcha, b64s, respuestaCaptcha, err := captcha.Generate()
+			if logErrorHttp(w, r, err) {
+				return
+			}
+			if len(captchasEmitidos) < MAX_CAPTCHAS_EMITIDOS {
+				captchasEmitidos = append(captchasEmitidos, CaptchaEmitido{idCaptcha, respuestaCaptcha, time.Now()})
+				renderPlantillaSimple(w, "frontend", "index", map[string]any{
+					"DEPARTAMENTOS": DEPARTAMENTOS,
+					"SEXO":          SEXO,
+					"OCUPACIONES":   OCUPACIONES,
+					"EDAD":          EDAD,
+					"ImagenCaptcha": template.URL(b64s),
+					"IdCaptcha":     idCaptcha,
+				})
+			} else {
+				http.NotFound(w, r)
+			}
 		} else {
 			http.NotFound(w, r)
 		}
@@ -476,133 +491,185 @@ func handleRenovarCaptcha(w http.ResponseWriter, r *http.Request) {
 
 func postEnviarInscripcion(db *badger.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := r.ParseMultipartForm(PARSEFORM_LIM)
+		if GLOBAL_habilitada_inscripcion {
+			err := r.ParseMultipartForm(PARSEFORM_LIM)
+			if logErrorHttp(w, r, err) {
+				return
+			}
+			esValido, err := validarCaptcha(r.FormValue("captcha-input"), r.FormValue("captcha-id"))
+			if logErrorHttp(w, r, err) {
+				return
+			}
+			if !esValido {
+				http.NotFound(w, r)
+				return
+			}
+
+			departamento, err := strconv.ParseUint(r.FormValue("departamento"), 10, 64)
+			if logErrorHttp(w, r, err) {
+				return
+			}
+
+			sexo, err := strconv.ParseUint(r.FormValue("sexo"), 10, 64)
+			if logErrorHttp(w, r, err) {
+				return
+			}
+
+			edad, err := strconv.ParseUint(r.FormValue("edad"), 10, 64)
+			if logErrorHttp(w, r, err) {
+				return
+			}
+
+			ocupacion, err := strconv.ParseUint(r.FormValue("ocupacion"), 10, 64)
+			if logErrorHttp(w, r, err) {
+				return
+			}
+
+			correoDestino := sanitizarTexto(r.FormValue("email"))
+
+			if ValidateEmailAddress(correoDestino) != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			nombreInscrito := sanitizarTexto(r.FormValue("nombre"))
+
+			nvoInscrito := Inscrito{
+				generarUID(),
+				nombreInscrito,
+				sanitizarTexto(r.FormValue("institucion")),
+				sanitizarTexto(r.FormValue("celular")),
+				correoDestino,
+				sanitizarTexto(r.FormValue("carnet")),
+				uint8(departamento),
+				uint8(sexo),
+				uint8(edad),
+				uint8(ocupacion),
+				false,
+				false,
+				false,
+			}
+
+			mutex_inscritos.Lock()
+			err = db.Update(func(txn *badger.Txn) error { /// AUMENTAR AL FINAL
+				return insertarRegistro(txn, INSCRITOS, nvoInscrito)
+			})
+			if logErrorHttp(w, r, err) {
+				mutex_inscritos.Unlock()
+				return
+			}
+
+			GLOBAL_inscritos = slices.Insert(GLOBAL_inscritos, 0, hacerInscritoMas(GLOBAL_contador_inscritos, nvoInscrito))
+			GLOBAL_contador_inscritos++
+			mutex_inscritos.Unlock()
+
+			w.WriteHeader(http.StatusOK)
+		} else {
+			http.NotFound(w, r)
+		}
+	}
+}
+
+func handleAsistencia1(w http.ResponseWriter, r *http.Request) {
+	if GLOBAL_habilitada_asistencia_1 {
+		driver := base64Captcha.NewDriverDigit(100, 240, 4, 0.7, 80)
+		captcha := base64Captcha.NewCaptcha(driver, base64Captcha.DefaultMemStore)
+		idCaptcha, b64s, respuestaCaptcha, err := captcha.Generate()
 		if logErrorHttp(w, r, err) {
 			return
 		}
-		valorCaptcha := r.FormValue("captcha-input")
-		idCaptcha := r.FormValue("captcha-id")
-
-		// FILTRANDO CAPTCHAS NO VIGENTES
-		var captchasValidos []CaptchaEmitido
-		tieneCambios := false
-		for _, capt := range captchasEmitidos {
-			if capt.tiempoEmision.After(time.Now().Add(-1 * TIEMPO_VIGENCIA_CAPTCHA)) {
-				captchasValidos = append(captchasValidos, capt)
-			} else {
-				tieneCambios = true
-			}
+		if len(captchasEmitidos) < MAX_CAPTCHAS_EMITIDOS {
+			captchasEmitidos = append(captchasEmitidos, CaptchaEmitido{idCaptcha, respuestaCaptcha, time.Now()})
+			renderPlantillaSimple(w, "frontend", "asistencia", map[string]any{
+				"ImagenCaptcha":    template.URL(b64s),
+				"IdCaptcha":        idCaptcha,
+				"NumeroFormulario": 1,
+				"TituloWebinar":    "WEBINAR I",
+			})
+		} else {
+			http.NotFound(w, r)
 		}
-		if tieneCambios {
-			captchasEmitidos = slices.Clone(captchasValidos)
-		}
+	} else {
+		http.NotFound(w, r)
+	}
+}
 
-		// VALIDANDO QUE NO SE SUPERA EL LIMITE DE CAPTCHAS CONCURRENTES
-		if len(captchasEmitidos) >= MAX_CAPTCHAS_EMITIDOS {
-			if logErrorHttp(w, r, errors.New("superado el limite de captchas concurrentes")) {
+func handleAsistencia2(w http.ResponseWriter, r *http.Request) {
+	if GLOBAL_habilitada_asistencia_2 {
+		driver := base64Captcha.NewDriverDigit(100, 240, 4, 0.7, 80)
+		captcha := base64Captcha.NewCaptcha(driver, base64Captcha.DefaultMemStore)
+		idCaptcha, b64s, respuestaCaptcha, err := captcha.Generate()
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		if len(captchasEmitidos) < MAX_CAPTCHAS_EMITIDOS {
+			captchasEmitidos = append(captchasEmitidos, CaptchaEmitido{idCaptcha, respuestaCaptcha, time.Now()})
+			renderPlantillaSimple(w, "frontend", "asistencia", map[string]any{
+				"ImagenCaptcha":    template.URL(b64s),
+				"IdCaptcha":        idCaptcha,
+				"NumeroFormulario": 2,
+				"TituloWebinar":    "WEBINAR II",
+			})
+		} else {
+			http.NotFound(w, r)
+		}
+	} else {
+		http.NotFound(w, r)
+	}
+}
+
+func postAsistencia(db *badger.DB, nroWebinar int) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if (GLOBAL_habilitada_asistencia_1 && nroWebinar == 1) ||
+			(GLOBAL_habilitada_asistencia_2 && nroWebinar == 2) {
+			err := r.ParseMultipartForm(PARSEFORM_LIM)
+			if logErrorHttp(w, r, err) {
 				return
 			}
-		}
-		// VALIDANDO CAPTCHA
-		captchaValido := false
-		idxDeCapt := -1
-		for i, capt := range captchasEmitidos {
-			if capt.Id == idCaptcha {
-				idxDeCapt = i
-				if capt.Respuesta == valorCaptcha {
-					captchaValido = true
+			esValido, err := validarCaptcha(r.FormValue("captcha-input"), r.FormValue("captcha-id"))
+			if logErrorHttp(w, r, err) {
+				return
+			}
+			if !esValido {
+				http.NotFound(w, r)
+				return
+			}
+
+			correoDestino := sanitizarTexto(r.FormValue("email"))
+
+			var inscrito *InscritoMas
+			for i, ins := range GLOBAL_inscritos {
+				if ins.Inscrito.Email == correoDestino {
+					inscrito = &GLOBAL_inscritos[i]
 					break
 				}
 			}
-		}
-
-		if !captchaValido {
-			// ANULANDO EN CASO QUE NO HAYA ADIVINADO EL CAPTCHA
-			if idxDeCapt != -1 {
-				captchasEmitidos[idxDeCapt].tiempoEmision = time.Time{}
+			if inscrito == nil {
+				w.WriteHeader(http.StatusExpectationFailed)
+				return
 			}
-			http.NotFound(w, r)
-			return
-		}
 
-		departamento, err := strconv.ParseUint(r.FormValue("departamento"), 10, 64)
-		if logErrorHttp(w, r, err) {
-			return
-		}
-
-		sexo, err := strconv.ParseUint(r.FormValue("sexo"), 10, 64)
-		if logErrorHttp(w, r, err) {
-			return
-		}
-
-		edad, err := strconv.ParseUint(r.FormValue("edad"), 10, 64)
-		if logErrorHttp(w, r, err) {
-			return
-		}
-
-		ocupacion, err := strconv.ParseUint(r.FormValue("ocupacion"), 10, 64)
-		if logErrorHttp(w, r, err) {
-			return
-		}
-
-		correoDestino := sanitizarTexto(r.FormValue("email"))
-
-		if ValidateEmailAddress(correoDestino) != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		nombreInscrito := sanitizarTexto(r.FormValue("nombre"))
-
-		nvoInscrito := Inscrito{
-			generarUID(),
-			nombreInscrito,
-			sanitizarTexto(r.FormValue("institucion")),
-			sanitizarTexto(r.FormValue("celular")),
-			correoDestino,
-			sanitizarTexto(r.FormValue("carnet")),
-			uint8(departamento),
-			uint8(sexo),
-			uint8(edad),
-			uint8(ocupacion),
-			false,
-		}
-
-		mutex_inscritos.Lock()
-		err = db.Update(func(txn *badger.Txn) error { /// AUMENTAR AL FINAL
-			return insertarRegistro(txn, INSCRITOS, nvoInscrito)
-		})
-		if logErrorHttp(w, r, err) {
+			mutex_inscritos.Lock()
+			if nroWebinar == 1 {
+				inscrito.Inscrito.Asistencia1 = true
+				inscrito.Asistencia1Str = bool2Str(true)
+			}
+			if nroWebinar == 2 {
+				inscrito.Inscrito.Asistencia2 = true
+				inscrito.Asistencia2Str = bool2Str(true)
+			}
+			err = db.Update(func(txn *badger.Txn) error { /// AUMENTAR AL FINAL
+				return editarRegistro(txn, INSCRITOS, inscrito.Inscrito, inscrito.Id)
+			})
+			if logErrorHttp(w, r, err) {
+				mutex_inscritos.Unlock()
+				return
+			}
 			mutex_inscritos.Unlock()
-			return
+			w.WriteHeader(http.StatusOK)
+		} else {
+			http.NotFound(w, r)
 		}
-
-		GLOBAL_inscritos = slices.Insert(GLOBAL_inscritos, 0, hacerInscritoMas(GLOBAL_contador_inscritos, nvoInscrito))
-		GLOBAL_contador_inscritos++
-		mutex_inscritos.Unlock()
-
-		/*
-					auth := smtp.PlainAuth("", CORREO_REMITENTE, PASS_CORREO, SMTP_HOST)
-
-					// Compose the message.
-					// Note: The headers and body must be separated by a blank line.
-
-					msg := fmt.Sprintf(`From: %s
-			To: %s
-			Subject: %s
-			MIME-Version: 1.0
-			Content-Type: text/html; charset=UTF-8
-
-			%s`, CORREO_REMITENTE, correoDestino, SUBJECT1, fmt.Sprintf(BODY1, nombreInscrito))
-
-					// Send the email.
-					err = smtp.SendMail(SMTP_HOST+":587", auth, CORREO_REMITENTE, []string{correoDestino}, []byte(msg))
-					if logErrorHttp(w, r, err) {
-						return
-					}
-		*/
-
-		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -1017,6 +1084,29 @@ func handleAdminEliminarInscrito(db *badger.DB, w http.ResponseWriter, r *http.R
 	http.Redirect(w, r, "/inscritos", http.StatusPermanentRedirect)
 }
 
+func handleAdminConfiguracion(w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	renderPlantilla(w, "admin", "base", "configuracion", map[string]any{
+		"EstadoInscripcion": GLOBAL_habilitada_inscripcion,
+		"EstadoAsistencia1": GLOBAL_habilitada_asistencia_1,
+		"EstadoAsistencia2": GLOBAL_habilitada_asistencia_2,
+		"UsuarioLogged":     usuario,
+		"EsAdmin":           usuario.Usuario.IdPerfil == PERFIL_ADMIN,
+	})
+}
+
+func postActualizarConfiguracion(w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	err := r.ParseMultipartForm(PARSEFORM_LIM)
+	if logErrorHttp(w, r, err) {
+		return
+	}
+
+	GLOBAL_habilitada_inscripcion = r.FormValue("inscripcion") == "on"
+	GLOBAL_habilitada_asistencia_1 = r.FormValue("asistencia-1") == "on"
+	GLOBAL_habilitada_asistencia_2 = r.FormValue("asistencia-2") == "on"
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func handleExportarInscritosXlsx(w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
 	nombreSheet := "Inscritos"
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -1036,6 +1126,8 @@ func handleExportarInscritosXlsx(w http.ResponseWriter, r *http.Request, usuario
 	f.SetCellValue(nombreSheet, "I1", "Edad")
 	f.SetCellValue(nombreSheet, "J1", "Ocupacion")
 	f.SetCellValue(nombreSheet, "K1", "SeEnvioCorreo1")
+	f.SetCellValue(nombreSheet, "L1", "Asistencia1")
+	f.SetCellValue(nombreSheet, "M1", "Asistencia2")
 
 	mutex_inscritos.Lock()
 	for i, c := range GLOBAL_inscritos {
@@ -1050,9 +1142,11 @@ func handleExportarInscritosXlsx(w http.ResponseWriter, r *http.Request, usuario
 		f.SetCellValue(nombreSheet, fmt.Sprintf("I%d", i+2), c.EdadStr)
 		f.SetCellValue(nombreSheet, fmt.Sprintf("J%d", i+2), c.OcupacionStr)
 		f.SetCellValue(nombreSheet, fmt.Sprintf("K%d", i+2), bool2Str(c.Inscrito.SeEnvioCorreo1))
+		f.SetCellValue(nombreSheet, fmt.Sprintf("L%d", i+2), bool2Str(c.Inscrito.Asistencia1))
+		f.SetCellValue(nombreSheet, fmt.Sprintf("M%d", i+2), bool2Str(c.Inscrito.Asistencia2))
 	}
 	err := f.AddTable(nombreSheet, &excelize.Table{
-		Range:     fmt.Sprintf("A1:K%d", len(GLOBAL_inscritos)+1),
+		Range:     fmt.Sprintf("A1:M%d", len(GLOBAL_inscritos)+1),
 		StyleName: "TableStyleMedium2",
 	})
 	if logErrorHttp(w, r, err) {
@@ -1150,6 +1244,8 @@ func postImportarInscritosXlsx(db *badger.DB, w http.ResponseWriter, r *http.Req
 			edad,
 			ocupacion,
 			str2Bool(rows[i][10]),
+			str2Bool(rows[i][11]),
+			str2Bool(rows[i][12]),
 		})
 	}
 
@@ -1860,6 +1956,8 @@ func hacerInscritoMas(id uint32, ins Inscrito) InscritoMas {
 		SEXO[ins.Sexo],
 		EDAD[ins.Edad],
 		OCUPACIONES[ins.Ocupacion],
+		bool2Str(ins.Asistencia1),
+		bool2Str(ins.Asistencia2),
 	}
 }
 
@@ -2170,4 +2268,44 @@ func buildEmailMessage(message EmailMessage) []byte {
 	msg.WriteString(message.Body)
 
 	return []byte(msg.String())
+}
+
+func validarCaptcha(valorCaptcha string, idCaptcha string) (bool, error) {
+	// FILTRANDO CAPTCHAS NO VIGENTES
+	var captchasValidos []CaptchaEmitido
+	tieneCambios := false
+	for _, capt := range captchasEmitidos {
+		if capt.tiempoEmision.After(time.Now().Add(-1 * TIEMPO_VIGENCIA_CAPTCHA)) {
+			captchasValidos = append(captchasValidos, capt)
+		} else {
+			tieneCambios = true
+		}
+	}
+	if tieneCambios {
+		captchasEmitidos = slices.Clone(captchasValidos)
+	}
+	// VALIDANDO QUE NO SE SUPERA EL LIMITE DE CAPTCHAS CONCURRENTES
+	if len(captchasEmitidos) >= MAX_CAPTCHAS_EMITIDOS {
+		return false, errors.New("superado el limite de captchas concurrentes")
+	}
+	// VALIDANDO CAPTCHA
+	captchaValido := false
+	idxDeCapt := -1
+	for i, capt := range captchasEmitidos {
+		if capt.Id == idCaptcha {
+			idxDeCapt = i
+			if capt.Respuesta == valorCaptcha {
+				captchaValido = true
+				break
+			}
+		}
+	}
+	if !captchaValido {
+		// ANULANDO EN CASO QUE NO HAYA ADIVINADO EL CAPTCHA
+		if idxDeCapt != -1 {
+			captchasEmitidos[idxDeCapt].tiempoEmision = time.Time{}
+		}
+		return false, nil
+	}
+	return true, nil
 }
