@@ -6,7 +6,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    {{if .Asistencia1}}
+    <title>Formulario de asistencia</title>
+    {{else}}
     <title>Formulario de inscripción</title>
+    {{end}}
     <style>
         :root {
             --entel-oscuro: hsl(210, 100%, 31%);
@@ -632,13 +636,22 @@
                 </div>
                 <input type="hidden" name="asistencia1" {{if .Asistencia1}}value="SI"{{else}}value="NO"{{end}}>
                 <div>
-                    <div id="btn-enviar">Enviar Inscripción<div class="spinner"></div>
-                    </div>
+                    {{if .Asistencia1}}
+                    <div id="btn-enviar">Enviar Inscripción<div class="spinner"></div></div>
+                    {{else}}
+                    <div id="btn-enviar">Registrar Asistencia<div class="spinner"></div></div>
+                    {{end}}
                 </div>
                 <input type="submit" id="btn-enviar-h">
             </form>
             <div id="mensaje-exito" class="oculto">
                 <div id="cont-svg-1"><img src="/static/img/exito1.svg" alt="icono"></div>
+                {{if .Asistencia1}}
+                <h3>ASISTENCIA REGISTRADA</h3>
+                <h5>Gracias por asistir al webinar.</h5>
+                <h6>Se ha registrado correctamente en nuestro sistema</h6>
+                <p>Si tiene alguna pregunta, no dude en contactarnos</p>
+                {{else}}
                 <h3>INSCRIPCIÓN</h3>
                 <h4>¡EXITOSA!</h4>
                 <h5>Gracias por completar su inscripción al webinar.</h5>
@@ -649,6 +662,7 @@
                     <p><b>48 horas antes del inicio del webinar</b></p>
                 </div>
                 <p>Si tiene alguna pregunta, no dude en contactarnos</p>
+                {{end}}
             </div>
         </div>
     </div>
