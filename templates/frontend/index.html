@@ -636,7 +636,7 @@
                 </div>
                 <input type="hidden" name="asistencia1" {{if .Asistencia1}}value="SI"{{else}}value="NO"{{end}}>
                 <div>
-                    {{if .Asistencia1}}
+                    {{if not .Asistencia1}}
                     <div id="btn-enviar">Enviar Inscripción<div class="spinner"></div></div>
                     {{else}}
                     <div id="btn-enviar">Registrar Asistencia<div class="spinner"></div></div>
