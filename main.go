@@ -323,6 +323,7 @@ func main() {
 	muxPagina.HandleFunc("POST /enviar-inscripcion", postEnviarInscripcion(db))
 	muxPagina.HandleFunc("GET /f1bc5a3f1a4b789483800a5979fb581584abd834b4785d823eead8190de0c2b3", handleAsistencia1)
 	muxPagina.HandleFunc("GET /33411753cbe8dd78cd788f7df9ccca7a21ef960acf50206fb86cdf58c0375701", handleAsistencia2)
+	muxPagina.HandleFunc("GET /e5b4dce6c35cdccb90f3bb9478225eed7de367c880e06f952af569ec62a367b4", handleAsistencia3)
 	muxPagina.HandleFunc("POST /registro-asistencia-1", postAsistencia(db, 1))
 	muxPagina.HandleFunc("POST /registro-asistencia-2", postAsistencia(db, 2))
 
@@ -546,7 +547,7 @@ func postEnviarInscripcion(db *badger.DB) http.HandlerFunc {
 				uint8(edad),
 				uint8(ocupacion),
 				false,
-				false,
+				r.FormValue("asistencia1") == "SI",
 				false,
 			}
 
@@ -613,6 +614,29 @@ func handleAsistencia2(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.NotFound(w, r)
 		}
+	} else {
+		http.NotFound(w, r)
+	}
+}
+
+func handleAsistencia3(w http.ResponseWriter, r *http.Request) {
+	driver := base64Captcha.NewDriverDigit(100, 240, 4, 0.7, 80)
+	captcha := base64Captcha.NewCaptcha(driver, base64Captcha.DefaultMemStore)
+	idCaptcha, b64s, respuestaCaptcha, err := captcha.Generate()
+	if logErrorHttp(w, r, err) {
+		return
+	}
+	if len(captchasEmitidos) < MAX_CAPTCHAS_EMITIDOS {
+		captchasEmitidos = append(captchasEmitidos, CaptchaEmitido{idCaptcha, respuestaCaptcha, time.Now()})
+		renderPlantillaSimple(w, "frontend", "index", map[string]any{
+			"DEPARTAMENTOS": DEPARTAMENTOS,
+			"SEXO":          SEXO,
+			"OCUPACIONES":   OCUPACIONES,
+			"EDAD":          EDAD,
+			"ImagenCaptcha": template.URL(b64s),
+			"IdCaptcha":     idCaptcha,
+			"Asistencia1":   true,
+		})
 	} else {
 		http.NotFound(w, r)
 	}

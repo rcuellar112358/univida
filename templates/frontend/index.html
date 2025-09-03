@@ -630,6 +630,7 @@
                     <input type="text" required name="captcha-input" id="captcha-input">
                     <input type="hidden" name="captcha-id" id="captcha-id" value="{{.IdCaptcha}}">
                 </div>
+                <input type="hidden" name="asistencia1" {{if .Asistencia1}}value="SI"{{else}}value="NO"{{end}}>
                 <div>
                     <div id="btn-enviar">Enviar Inscripción<div class="spinner"></div>
                     </div>
