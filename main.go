@@ -127,6 +127,7 @@ const (
 	SESIONES = iota + 1
 	USUARIOS
 	INSCRITOS
+	SATISFACCION
 )
 
 var TABLAS = map[uint8]string{
@@ -136,11 +137,11 @@ var TABLAS = map[uint8]string{
 }
 
 type Tabla interface {
-	Inscrito | Usuario | int
+	Satisfaccion | Inscrito | Usuario | int
 }
 
 type TablaMas interface {
-	InscritoMas
+	SatisfaccionMas | InscritoMas
 }
 
 var USUARIOS_0 = []Usuario{
@@ -220,6 +221,68 @@ var OCUPACIONES = map[uint8]string{
 
 var CONTR_OCUPACIONES = reverseMap(OCUPACIONES)
 
+const (
+	S1_EXCELENTE = iota + 1
+	S1_BUENA
+	S1_REGULAR
+	S1_MALA
+)
+
+var SATISFACCION_1 = map[uint8]string{
+	S1_EXCELENTE: "Excelente",
+	S1_BUENA:     "Buena",
+	S1_REGULAR:   "Regular",
+	S1_MALA:      "Mala",
+}
+
+var CONTR_SATISFACCION_1 = reverseMap(SATISFACCION_1)
+
+const (
+	S2_TOT_DEACUERDO = iota + 1
+	S2_DEACUERDO
+	S2_DESACUERDO
+	S2_TOT_DESACUERDO
+)
+
+var SATISFACCION_2 = map[uint8]string{
+	S2_TOT_DEACUERDO:  "Totalmente de acuerdo",
+	S2_DEACUERDO:      "De acuerdo",
+	S2_DESACUERDO:     "En desacuerdo",
+	S2_TOT_DESACUERDO: "Totalmente en desacuerdo",
+}
+
+var CONTR_SATISFACCION_2 = reverseMap(SATISFACCION_2)
+
+const (
+	S3_SI = iota + 1
+	S3_NO
+	S3_PARCIALMENTE
+)
+
+var SATISFACCION_3 = map[uint8]string{
+	S3_SI:           "SI",
+	S3_NO:           "NO",
+	S3_PARCIALMENTE: "PARCIALMENTE",
+}
+
+var CONTR_SATISFACCION_3 = reverseMap(SATISFACCION_3)
+
+const (
+	S4_MUY_ALTO = iota + 1
+	S4_ALTO
+	S4_MEDIO
+	S4_BAJO
+)
+
+var SATISFACCION_4 = map[uint8]string{
+	S4_MUY_ALTO: "Muy Alto",
+	S4_ALTO:     "Alto",
+	S4_MEDIO:    "Medio",
+	S4_BAJO:     "Bajo",
+}
+
+var CONTR_SATISFACCION_4 = reverseMap(SATISFACCION_4)
+
 type Usuario struct {
 	Key            uint64 // FUNCIONA COMO FECHA E IDENTIFICADOR UNICO
 	IdPerfil       uint8
@@ -261,6 +324,37 @@ type InscritoMas struct {
 	Asistencia2Str  string
 }
 
+type Satisfaccion struct {
+	Key          uint64
+	Institucion  string
+	Departamento uint8
+	Celular      string
+	Pregunta4    uint8
+	Pregunta5    uint8
+	Pregunta6    uint8
+	Pregunta7    uint8
+	Pregunta8    uint8
+	Pregunta9    uint8
+	Pregunta10   uint8
+	Pregunta11   string
+	Pregunta12   string
+	Pregunta13   uint8
+}
+
+type SatisfaccionMas struct {
+	Id              uint32
+	Satisfaccion    Satisfaccion
+	DepartamentoStr string
+	Pregunta4Str    string
+	Pregunta5Str    string
+	Pregunta6Str    string
+	Pregunta7Str    string
+	Pregunta8Str    string
+	Pregunta9Str    string
+	Pregunta10Str   string
+	Pregunta13Str   string
+}
+
 type Sesion struct {
 	IdUsuario uint32
 	Valor     string
@@ -284,6 +378,10 @@ var GLOBAL_sesiones []Sesion
 var mutex_inscritos sync.Mutex
 var GLOBAL_inscritos []InscritoMas
 var GLOBAL_contador_inscritos uint32
+
+var mutex_satisfaccion sync.Mutex
+var GLOBAL_satisfaccion []SatisfaccionMas
+var GLOBAL_contador_satisfaccion uint32
 
 var GLOBAL_habilitada_inscripcion = false
 var GLOBAL_habilitada_asistencia_1 = false
@@ -324,8 +422,11 @@ func main() {
 	muxPagina.HandleFunc("GET /f1bc5a3f1a4b789483800a5979fb581584abd834b4785d823eead8190de0c2b3", handleAsistencia1)
 	muxPagina.HandleFunc("GET /33411753cbe8dd78cd788f7df9ccca7a21ef960acf50206fb86cdf58c0375701", handleAsistencia2)
 	muxPagina.HandleFunc("GET /e5b4dce6c35cdccb90f3bb9478225eed7de367c880e06f952af569ec62a367b4", handleAsistencia3)
+	muxPagina.HandleFunc("GET /2426dcebed1d1f21913040d953c361c540f0e79368b0965d672e63822489493e", handleAsistencia4)
 	muxPagina.HandleFunc("POST /registro-asistencia-1", postAsistencia(db, 1))
 	muxPagina.HandleFunc("POST /registro-asistencia-2", postAsistencia(db, 2))
+	muxPagina.HandleFunc("GET /satisfaccion", handleSatisfaccion)
+	muxPagina.HandleFunc("POST /satisfaccion", postSatisfaccion(db))
 
 	/* ADMIN */
 	P0 := []uint8{PERFIL_ADMIN}
@@ -353,12 +454,18 @@ func main() {
 	muxAdmin.HandleFunc("GET /inscritos/", esAuth(handleAdminInscritosPag, P_ALL))
 	muxAdmin.HandleFunc("GET /ver-datos/", esAuth(handleAdminVerDatos, P_ALL))
 	muxAdmin.HandleFunc("GET /eliminar-inscrito/", esAuthDB(db, handleAdminEliminarInscrito, P_ALL))
+	muxAdmin.HandleFunc("GET /exportar-inscritos-xlsx", esAuth(handleExportarInscritosXlsx, P_ALL))
+	muxAdmin.HandleFunc("POST /importar-inscritos-xlsx", esAuthDB(db, postImportarInscritosXlsx, P_ALL))
+
+	muxAdmin.HandleFunc("GET /satisfaccion", esAuth(handleAdminSatisfaccion, P_ALL))
+	muxAdmin.HandleFunc("GET /satisfaccion/", esAuth(handleAdminSatisfaccionPag, P_ALL))
+	muxAdmin.HandleFunc("GET /ver-satisf/", esAuth(handleAdminVerSatisf, P_ALL))
+	muxAdmin.HandleFunc("GET /eliminar-satisf/", esAuthDB(db, handleAdminEliminarSatisf, P_ALL))
+	muxAdmin.HandleFunc("GET /exportar-satisf-xlsx", esAuth(handleExportarSatisfXlsx, P_ALL))
+	muxAdmin.HandleFunc("POST /importar-satisf-xlsx", esAuthDB(db, postImportarSatisfXlsx, P_ALL))
 
 	muxAdmin.HandleFunc("GET /configuracion", esAuth(handleAdminConfiguracion, P_ALL))
 	muxAdmin.HandleFunc("POST /actualizar-configuracion", esAuth(postActualizarConfiguracion, P_ALL))
-
-	muxAdmin.HandleFunc("GET /exportar-inscritos-xlsx", esAuth(handleExportarInscritosXlsx, P_ALL))
-	muxAdmin.HandleFunc("POST /importar-inscritos-xlsx", esAuthDB(db, postImportarInscritosXlsx, P_ALL))
 
 	// TODO: Verificar que no ocurran problemas de seguridad porque ambos servidores puedan acceder
 	// 		 a la misma carpeta de recursos
@@ -492,82 +599,78 @@ func handleRenovarCaptcha(w http.ResponseWriter, r *http.Request) {
 
 func postEnviarInscripcion(db *badger.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if GLOBAL_habilitada_inscripcion {
-			err := r.ParseMultipartForm(PARSEFORM_LIM)
-			if logErrorHttp(w, r, err) {
-				return
-			}
-			esValido, err := validarCaptcha(r.FormValue("captcha-input"), r.FormValue("captcha-id"))
-			if logErrorHttp(w, r, err) {
-				return
-			}
-			if !esValido {
-				http.NotFound(w, r)
-				return
-			}
-
-			departamento, err := strconv.ParseUint(r.FormValue("departamento"), 10, 64)
-			if logErrorHttp(w, r, err) {
-				return
-			}
-
-			sexo, err := strconv.ParseUint(r.FormValue("sexo"), 10, 64)
-			if logErrorHttp(w, r, err) {
-				return
-			}
-
-			edad, err := strconv.ParseUint(r.FormValue("edad"), 10, 64)
-			if logErrorHttp(w, r, err) {
-				return
-			}
-
-			ocupacion, err := strconv.ParseUint(r.FormValue("ocupacion"), 10, 64)
-			if logErrorHttp(w, r, err) {
-				return
-			}
-
-			correoDestino := sanitizarTexto(r.FormValue("email"))
-
-			if ValidateEmailAddress(correoDestino) != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			nombreInscrito := sanitizarTexto(r.FormValue("nombre"))
-
-			nvoInscrito := Inscrito{
-				generarUID(),
-				nombreInscrito,
-				sanitizarTexto(r.FormValue("institucion")),
-				sanitizarTexto(r.FormValue("celular")),
-				correoDestino,
-				sanitizarTexto(r.FormValue("carnet")),
-				uint8(departamento),
-				uint8(sexo),
-				uint8(edad),
-				uint8(ocupacion),
-				false,
-				r.FormValue("asistencia1") == "SI",
-				false,
-			}
-
-			mutex_inscritos.Lock()
-			err = db.Update(func(txn *badger.Txn) error { /// AUMENTAR AL FINAL
-				return insertarRegistro(txn, INSCRITOS, nvoInscrito)
-			})
-			if logErrorHttp(w, r, err) {
-				mutex_inscritos.Unlock()
-				return
-			}
-
-			GLOBAL_inscritos = slices.Insert(GLOBAL_inscritos, 0, hacerInscritoMas(GLOBAL_contador_inscritos, nvoInscrito))
-			GLOBAL_contador_inscritos++
-			mutex_inscritos.Unlock()
-
-			w.WriteHeader(http.StatusOK)
-		} else {
-			http.NotFound(w, r)
+		err := r.ParseMultipartForm(PARSEFORM_LIM)
+		if logErrorHttp(w, r, err) {
+			return
 		}
+		esValido, err := validarCaptcha(r.FormValue("captcha-input"), r.FormValue("captcha-id"))
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		if !esValido {
+			http.NotFound(w, r)
+			return
+		}
+
+		departamento, err := strconv.ParseUint(r.FormValue("departamento"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		sexo, err := strconv.ParseUint(r.FormValue("sexo"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		edad, err := strconv.ParseUint(r.FormValue("edad"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		ocupacion, err := strconv.ParseUint(r.FormValue("ocupacion"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		correoDestino := sanitizarTexto(r.FormValue("email"))
+
+		if ValidateEmailAddress(correoDestino) != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		nombreInscrito := sanitizarTexto(r.FormValue("nombre"))
+
+		nvoInscrito := Inscrito{
+			generarUID(),
+			nombreInscrito,
+			sanitizarTexto(r.FormValue("institucion")),
+			sanitizarTexto(r.FormValue("celular")),
+			correoDestino,
+			sanitizarTexto(r.FormValue("carnet")),
+			uint8(departamento),
+			uint8(sexo),
+			uint8(edad),
+			uint8(ocupacion),
+			r.FormValue("asistencia1") == "SI" || r.FormValue("asistencia2") == "SI",
+			r.FormValue("asistencia1") == "SI",
+			r.FormValue("asistencia2") == "SI",
+		}
+
+		mutex_inscritos.Lock()
+		err = db.Update(func(txn *badger.Txn) error { /// AUMENTAR AL FINAL
+			return insertarRegistro(txn, INSCRITOS, nvoInscrito)
+		})
+		if logErrorHttp(w, r, err) {
+			mutex_inscritos.Unlock()
+			return
+		}
+
+		GLOBAL_inscritos = slices.Insert(GLOBAL_inscritos, 0, hacerInscritoMas(GLOBAL_contador_inscritos, nvoInscrito))
+		GLOBAL_contador_inscritos++
+		mutex_inscritos.Unlock()
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -642,6 +745,29 @@ func handleAsistencia3(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleAsistencia4(w http.ResponseWriter, r *http.Request) {
+	driver := base64Captcha.NewDriverDigit(100, 240, 4, 0.7, 80)
+	captcha := base64Captcha.NewCaptcha(driver, base64Captcha.DefaultMemStore)
+	idCaptcha, b64s, respuestaCaptcha, err := captcha.Generate()
+	if logErrorHttp(w, r, err) {
+		return
+	}
+	if len(captchasEmitidos) < MAX_CAPTCHAS_EMITIDOS {
+		captchasEmitidos = append(captchasEmitidos, CaptchaEmitido{idCaptcha, respuestaCaptcha, time.Now()})
+		renderPlantillaSimple(w, "frontend", "index", map[string]any{
+			"DEPARTAMENTOS": DEPARTAMENTOS,
+			"SEXO":          SEXO,
+			"OCUPACIONES":   OCUPACIONES,
+			"EDAD":          EDAD,
+			"ImagenCaptcha": template.URL(b64s),
+			"IdCaptcha":     idCaptcha,
+			"Asistencia2":   true,
+		})
+	} else {
+		http.NotFound(w, r)
+	}
+}
+
 func postAsistencia(db *badger.DB, nroWebinar int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if (GLOBAL_habilitada_asistencia_1 && nroWebinar == 1) ||
@@ -694,6 +820,95 @@ func postAsistencia(db *badger.DB, nroWebinar int) http.HandlerFunc {
 		} else {
 			http.NotFound(w, r)
 		}
+	}
+}
+
+func handleSatisfaccion(w http.ResponseWriter, r *http.Request) {
+	renderPlantillaSimple(w, "frontend", "satisfaccion", map[string]any{
+		"DEPARTAMENTOS":  DEPARTAMENTOS,
+		"SATISFACCION_1": SATISFACCION_1,
+		"SATISFACCION_2": SATISFACCION_2,
+		"SATISFACCION_3": SATISFACCION_3,
+		"SATISFACCION_4": SATISFACCION_4,
+	})
+}
+
+func postSatisfaccion(db *badger.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseMultipartForm(PARSEFORM_LIM)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		departamento, err := strconv.ParseUint(r.FormValue("departamento"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		satisf4, err := strconv.ParseUint(r.FormValue("satisf_4"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		satisf5, err := strconv.ParseUint(r.FormValue("satisf_5"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		satisf6, err := strconv.ParseUint(r.FormValue("satisf_6"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		satisf7, err := strconv.ParseUint(r.FormValue("satisf_7"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		satisf8, err := strconv.ParseUint(r.FormValue("satisf_8"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		satisf9, err := strconv.ParseUint(r.FormValue("satisf_9"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		satisf10, err := strconv.ParseUint(r.FormValue("satisf_10"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		satisf13, err := strconv.ParseUint(r.FormValue("satisf_13"), 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		nvoSatisfaccion := Satisfaccion{
+			generarUID(),
+			sanitizarTexto(r.FormValue("institucion")),
+			uint8(departamento),
+			sanitizarTexto(r.FormValue("celular")),
+			uint8(satisf4),
+			uint8(satisf5),
+			uint8(satisf6),
+			uint8(satisf7),
+			uint8(satisf8),
+			uint8(satisf9),
+			uint8(satisf10),
+			sanitizarTexto(r.FormValue("satisf_11")),
+			sanitizarTexto(r.FormValue("satisf_12")),
+			uint8(satisf13),
+		}
+
+		mutex_satisfaccion.Lock()
+		err = db.Update(func(txn *badger.Txn) error { /// AUMENTAR AL FINAL
+			return insertarRegistro(txn, SATISFACCION, nvoSatisfaccion)
+		})
+		if logErrorHttp(w, r, err) {
+			mutex_satisfaccion.Unlock()
+			return
+		}
+
+		GLOBAL_satisfaccion = slices.Insert(GLOBAL_satisfaccion, 0, hacerSatisfaccionMas(GLOBAL_contador_satisfaccion, nvoSatisfaccion))
+		GLOBAL_contador_satisfaccion++
+		mutex_satisfaccion.Unlock()
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -1295,6 +1510,350 @@ func postImportarInscritosXlsx(db *badger.DB, w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusOK)
 }
 
+func handleAdminSatisfaccion(w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	mutex_satisfaccion.Lock()
+	satisfaccionAMostrar, enlacesEnPaginador, prevPag, nextPag := paginar(GLOBAL_satisfaccion, REGISTROS_POR_PAGINA_DEFAULT, 1)
+	mutex_satisfaccion.Unlock()
+	renderPlantilla(w, "admin", "base", "satisfaccion", map[string]any{
+		"Satisfs":          satisfaccionAMostrar,
+		"PaginaActual":     1,
+		"PrevPag":          prevPag,
+		"NextPag":          nextPag,
+		"EnlacesPaginador": enlacesEnPaginador,
+		"UsuarioLogged":    usuario,
+		"EsAdmin":          usuario.Usuario.IdPerfil == PERFIL_ADMIN,
+	})
+}
+
+func handleAdminSatisfaccionPag(w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	var satisfaccionAMostrar []SatisfaccionMas
+	var enlacesEnPaginador []uint32
+	var prevPag, nextPag uint32
+	var query string
+	intID, err := urlId(r.URL.Path)
+	if logErrorHttp(w, r, err) {
+		return
+	}
+	if intID == 0 {
+		http.NotFound(w, r)
+		return
+	}
+	if len(r.URL.RawQuery) < 3 {
+		mutex_satisfaccion.Lock()
+		satisfaccionAMostrar, enlacesEnPaginador, prevPag, nextPag = paginar(GLOBAL_satisfaccion, REGISTROS_POR_PAGINA_DEFAULT, intID)
+	} else {
+		query, err = url.QueryUnescape(r.URL.RawQuery[2:])
+		if logErrorHttp(w, r, err) {
+			return
+		}
+		if len(query) == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		mutex_satisfaccion.Lock()
+		var satisfEncontrados []SatisfaccionMas
+		for i, c := range GLOBAL_satisfaccion {
+			q := strings.ToLower(query)
+			t1 := strings.ToLower(c.Satisfaccion.Institucion)
+			t2 := strings.ToLower(c.DepartamentoStr)
+			t3 := strings.ToLower(c.Satisfaccion.Celular)
+			if strings.Contains(t1, q) ||
+				strings.Contains(t2, q) ||
+				strings.Contains(t3, q) {
+				satisfEncontrados = append(satisfEncontrados, GLOBAL_satisfaccion[i])
+			}
+		}
+		satisfaccionAMostrar, enlacesEnPaginador, prevPag, nextPag = paginar(satisfEncontrados, REGISTROS_POR_PAGINA_DEFAULT, intID)
+	}
+	mutex_satisfaccion.Unlock()
+
+	if len(satisfaccionAMostrar) == 0 && intID != 1 {
+		http.NotFound(w, r)
+		return
+	}
+	renderPlantilla(w, "admin", "base", "satisfaccion", map[string]any{
+		"Satisfs":          satisfaccionAMostrar,
+		"PaginaActual":     intID,
+		"PrevPag":          prevPag,
+		"NextPag":          nextPag,
+		"Query":            r.URL.RawQuery,
+		"OrigQuery":        query,
+		"EnlacesPaginador": enlacesEnPaginador,
+		"UsuarioLogged":    usuario,
+		"EsAdmin":          usuario.Usuario.IdPerfil == PERFIL_ADMIN,
+	})
+}
+
+func handleAdminVerSatisf(w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	intID, err := urlId(r.URL.Path)
+	if logErrorHttp(w, r, err) {
+		return
+	}
+
+	mutex_satisfaccion.Lock()
+
+	var c *SatisfaccionMas
+	for i := range GLOBAL_satisfaccion {
+		if GLOBAL_satisfaccion[i].Id == intID {
+			c = &GLOBAL_satisfaccion[i]
+			break
+		}
+	}
+
+	if c == nil {
+		mutex_satisfaccion.Unlock()
+		http.NotFound(w, r)
+		return
+	}
+	mutex_satisfaccion.Unlock()
+
+	renderPlantilla(w, "admin", "base", "ver_satisf", map[string]any{
+		"Satisfaccion":  c,
+		"UsuarioLogged": usuario,
+		"EsAdmin":       usuario.Usuario.IdPerfil == PERFIL_ADMIN,
+	})
+}
+
+func handleAdminEliminarSatisf(db *badger.DB, w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	intID, err := urlId(r.URL.Path)
+	if logErrorHttp(w, r, err) {
+		return
+	}
+
+	mutex_satisfaccion.Lock()
+
+	var pos uint32
+	seEncontro := false
+	for i := range GLOBAL_satisfaccion {
+		if GLOBAL_satisfaccion[i].Id == intID {
+			pos = uint32(i)
+			seEncontro = true
+			break
+		}
+	}
+
+	if !seEncontro {
+		mutex_satisfaccion.Unlock()
+		http.NotFound(w, r)
+		return
+	}
+
+	err = db.Update(func(txn *badger.Txn) error {
+		return txn.Delete(crearIdBytes(SATISFACCION, intID))
+	})
+	if logErrorHttp(w, r, err) {
+		mutex_satisfaccion.Unlock()
+		return
+	}
+
+	GLOBAL_satisfaccion = append(GLOBAL_satisfaccion[:pos], GLOBAL_satisfaccion[pos+1:]...)
+	mutex_satisfaccion.Unlock()
+
+	w.Header().Set("Cache-Control", "no-store") // IMPORTANTE PARA EVITAR COMPORTAMIENTO NO DESEADO DEL NAVEGADOR
+	http.Redirect(w, r, "/satisfaccion", http.StatusPermanentRedirect)
+}
+
+func handleExportarSatisfXlsx(w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	nombreSheet := "Satisfaccion"
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", "attachment; filename="+strings.ToLower(nombreSheet)+".xlsx")
+
+	f := excelize.NewFile()
+	f.SetSheetName(f.GetSheetName(0), nombreSheet)
+
+	f.SetCellValue(nombreSheet, "A1", "Key")
+	f.SetCellValue(nombreSheet, "B1", "Institucion")
+	f.SetCellValue(nombreSheet, "C1", "Departamento")
+	f.SetCellValue(nombreSheet, "D1", "Celular")
+	f.SetCellValue(nombreSheet, "E1", "Pregunta4")
+	f.SetCellValue(nombreSheet, "F1", "Pregunta5")
+	f.SetCellValue(nombreSheet, "G1", "Pregunta6")
+	f.SetCellValue(nombreSheet, "H1", "Pregunta7")
+	f.SetCellValue(nombreSheet, "I1", "Pregunta8")
+	f.SetCellValue(nombreSheet, "J1", "Pregunta9")
+	f.SetCellValue(nombreSheet, "K1", "Pregunta10")
+	f.SetCellValue(nombreSheet, "L1", "Pregunta11")
+	f.SetCellValue(nombreSheet, "M1", "Pregunta12")
+	f.SetCellValue(nombreSheet, "N1", "Pregunta13")
+
+	mutex_satisfaccion.Lock()
+	for i, c := range GLOBAL_satisfaccion {
+		f.SetCellValue(nombreSheet, fmt.Sprintf("A%d", i+2), strconv.FormatUint(c.Satisfaccion.Key, 10))
+		f.SetCellValue(nombreSheet, fmt.Sprintf("B%d", i+2), c.Satisfaccion.Institucion)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("C%d", i+2), c.DepartamentoStr)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("D%d", i+2), c.Satisfaccion.Celular)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("E%d", i+2), c.Pregunta4Str)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("F%d", i+2), c.Pregunta5Str)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("G%d", i+2), c.Pregunta6Str)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("H%d", i+2), c.Pregunta7Str)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("I%d", i+2), c.Pregunta8Str)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("J%d", i+2), c.Pregunta9Str)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("K%d", i+2), c.Pregunta10Str)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("L%d", i+2), c.Satisfaccion.Pregunta11)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("M%d", i+2), c.Satisfaccion.Pregunta12)
+		f.SetCellValue(nombreSheet, fmt.Sprintf("N%d", i+2), c.Pregunta13Str)
+	}
+	err := f.AddTable(nombreSheet, &excelize.Table{
+		Range:     fmt.Sprintf("A1:N%d", len(GLOBAL_satisfaccion)+1),
+		StyleName: "TableStyleMedium2",
+	})
+	if logErrorHttp(w, r, err) {
+		mutex_satisfaccion.Unlock()
+		return
+	}
+	mutex_satisfaccion.Unlock()
+	// NOTA: Agregar Autofit cuando este disponible
+	// https://github.com/qax-os/excelize/issues/92
+	buf, err := f.WriteToBuffer()
+	if logErrorHttp(w, r, err) {
+		return
+	}
+	if logErrorHttp(w, r, f.Close()) {
+		return
+	}
+	w.Write(buf.Bytes())
+}
+
+func postImportarSatisfXlsx(db *badger.DB, w http.ResponseWriter, r *http.Request, usuario *UsuarioMas) {
+	err := r.ParseMultipartForm(PARSEFORM_LIM)
+	if logErrorHttp(w, r, err) {
+		return
+	}
+	multipartFormData := r.MultipartForm
+	if len(multipartFormData.File["file"]) > 1 {
+		if logErrorHttp(w, r, errors.New("error, no se acepta mas de 1 archivo")) {
+			return
+		}
+	}
+	var satisfs []Satisfaccion
+
+	uploadedFile, err := multipartFormData.File["file"][0].Open() //uploadedFile
+	if logErrorHttp(w, r, err) {
+		return
+	}
+	f, err := excelize.OpenReader(uploadedFile, excelize.Options{
+		RawCellValue: true,
+	})
+	if logErrorHttp(w, r, err) {
+		return
+	}
+
+	rowsRaw, err := f.GetRows("Satisfaccion", excelize.Options{
+		RawCellValue: true,
+	})
+	if logErrorHttp(w, r, err) {
+		return
+	}
+
+	rows := normalizarRows(rowsRaw, 14)
+
+	for i := 1; i < len(rows); i++ {
+		key, err := strconv.ParseUint(rows[i][0], 10, 64)
+		if logErrorHttp(w, r, err) {
+			return
+		}
+
+		departamento, exists := CONTR_DEPARTAMENTOS[rows[i][2]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear departamentos")) {
+				return
+			}
+		}
+
+		preg4, exists := CONTR_SATISFACCION_1[rows[i][4]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear pregunta 4")) {
+				return
+			}
+		}
+
+		preg5, exists := CONTR_SATISFACCION_2[rows[i][5]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear pregunta 5")) {
+				return
+			}
+		}
+
+		preg6, exists := CONTR_SATISFACCION_3[rows[i][6]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear pregunta 6")) {
+				return
+			}
+		}
+
+		preg7, exists := CONTR_SATISFACCION_1[rows[i][7]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear pregunta 7")) {
+				return
+			}
+		}
+
+		preg8, exists := CONTR_SATISFACCION_4[rows[i][8]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear pregunta 8")) {
+				return
+			}
+		}
+
+		preg9, exists := CONTR_SATISFACCION_3[rows[i][9]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear pregunta 9")) {
+				return
+			}
+		}
+		preg10, exists := CONTR_SATISFACCION_2[rows[i][10]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear pregunta 10")) {
+				return
+			}
+		}
+		preg13, exists := CONTR_SATISFACCION_3[rows[i][13]]
+		if !exists {
+			if logErrorHttp(w, r, errors.New("error al parsear pregunta 13")) {
+				return
+			}
+		}
+
+		satisfs = append(satisfs, Satisfaccion{
+			key,
+			rows[i][1], // Institucion
+			departamento,
+			rows[i][3], // Celular
+			preg4,
+			preg5,
+			preg6,
+			preg7,
+			preg8,
+			preg9,
+			preg10,
+			rows[i][11],
+			rows[i][12],
+			preg13,
+		})
+	}
+
+	mutex_satisfaccion.Lock()
+	err = reemplazarTabla(db, SATISFACCION, satisfs)
+	if logErrorHttp(w, r, err) {
+		mutex_satisfaccion.Unlock()
+		return
+	}
+	GLOBAL_contador_satisfaccion = uint32(len(satisfs))
+	GLOBAL_satisfaccion = nil
+	GLOBAL_satisfaccion = make([]SatisfaccionMas, len(satisfs))
+
+	for i, c := range satisfs {
+		GLOBAL_satisfaccion[i] = hacerSatisfaccionMas(uint32(i), c)
+	}
+	// AQUI ORDENAR POR FECHA
+	slices.SortFunc(GLOBAL_satisfaccion, func(a, b SatisfaccionMas) int {
+		return cmp.Compare(b.Satisfaccion.Key, a.Satisfaccion.Key)
+	})
+	mutex_satisfaccion.Unlock()
+
+	w.WriteHeader(http.StatusOK)
+}
+
 /*****************
 HERRAMIENTAS
 ******************/
@@ -1346,6 +1905,22 @@ func hacerUsuarioMas(id uint32, usuario Usuario) UsuarioMas {
 		id,
 		usuario,
 		PERFIL[usuario.IdPerfil],
+	}
+}
+
+func hacerSatisfaccionMas(id uint32, satisfaccion Satisfaccion) SatisfaccionMas {
+	return SatisfaccionMas{
+		id,
+		satisfaccion,
+		DEPARTAMENTOS[satisfaccion.Departamento],
+		SATISFACCION_1[satisfaccion.Pregunta4],
+		SATISFACCION_2[satisfaccion.Pregunta5],
+		SATISFACCION_3[satisfaccion.Pregunta6],
+		SATISFACCION_1[satisfaccion.Pregunta7],
+		SATISFACCION_4[satisfaccion.Pregunta8],
+		SATISFACCION_3[satisfaccion.Pregunta9],
+		SATISFACCION_2[satisfaccion.Pregunta10],
+		SATISFACCION_3[satisfaccion.Pregunta13],
 	}
 }
 
@@ -1669,6 +2244,8 @@ func iniciarTablasGlobales(db *badger.DB) error {
 	var tempUsuarios []Usuario
 	var idsTempInscritos []uint32
 	var tempInscritos []Inscrito
+	var idsTempSatisfaccion []uint32
+	var tempSatisfaccion []Satisfaccion
 
 	err := db.View(func(txn *badger.Txn) error {
 		var err error
@@ -1688,6 +2265,14 @@ func iniciarTablasGlobales(db *badger.DB) error {
 		if err != nil {
 			return err
 		}
+		idsTempSatisfaccion, tempSatisfaccion, err = conseguirTodos[Satisfaccion](txn, SATISFACCION)
+		if err != nil {
+			return err
+		}
+		GLOBAL_contador_satisfaccion, err = conseguirContador[Satisfaccion](txn, SATISFACCION)
+		if err != nil {
+			return err
+		}
 		GLOBAL_sesiones, err = conseguirSesiones(txn)
 		return err
 	})
@@ -1702,9 +2287,17 @@ func iniciarTablasGlobales(db *badger.DB) error {
 	for i := range tempInscritos {
 		GLOBAL_inscritos[i] = hacerInscritoMas(idsTempInscritos[i], tempInscritos[i])
 	}
+	GLOBAL_satisfaccion = make([]SatisfaccionMas, len(tempSatisfaccion))
+	for i := range tempSatisfaccion {
+		GLOBAL_satisfaccion[i] = hacerSatisfaccionMas(idsTempSatisfaccion[i], tempSatisfaccion[i])
+	}
 	// AQUI ORDENAR
 	slices.SortFunc(GLOBAL_inscritos, func(a, b InscritoMas) int {
 		return cmp.Compare(b.Inscrito.Key, a.Inscrito.Key)
+	})
+
+	slices.SortFunc(GLOBAL_satisfaccion, func(a, b SatisfaccionMas) int {
+		return cmp.Compare(b.Satisfaccion.Key, a.Satisfaccion.Key)
 	})
 	return nil
 }
@@ -1751,6 +2344,10 @@ func crearRegistrosIniciales(db *badger.DB) {
 	}
 
 	err = iniciarTablaGrande(db, INSCRITOS, []Inscrito{})
+	if err != nil {
+		log.Fatal("Error al cargar valores iniciales: ", err)
+	}
+	err = iniciarTablaGrande(db, SATISFACCION, []Satisfaccion{})
 	if err != nil {
 		log.Fatal("Error al cargar valores iniciales: ", err)
 	}

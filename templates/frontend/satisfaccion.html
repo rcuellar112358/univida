@@ -1,4 +1,4 @@
-{{define "index"}}
+{{define "satisfaccion"}}
 <!DOCTYPE html>
 <html lang="es-419">
 
@@ -6,11 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    {{if or .Asistencia1 .Asistencia2}}
-    <title>Formulario de asistencia</title>
-    {{else}}
-    <title>Formulario de inscripción</title>
-    {{end}}
+    <title>Encuesta de satisfacción</title>
     <style>
         :root {
             --entel-oscuro: hsl(210, 100%, 31%);
@@ -117,15 +113,13 @@
             margin: auto;
             width: 100%;
             max-width: 100rem;
-            height: 75vh;
             background-color: hsl(224, 38%, 19%);
             display: flex;
             border-radius: 2rem;
         }
 
         #col-1 {
-            width: 55%;
-            background-image: url('/static/img/escudo.png');
+            width: 100%;
             background-size: 60% auto;
             background-position: 50% 65%;
             background-repeat: no-repeat;
@@ -135,7 +129,7 @@
             gap: 1rem;
         }
 
-        #head-col-1{
+        #head-col-1 {
             display: flex;
             flex-direction: column;
             gap: 1rem;
@@ -143,7 +137,7 @@
         }
 
         #col-2 {
-            width: 45%;
+            width: 100%;
             padding: 1rem;
             display: flex;
             align-items: center;
@@ -211,7 +205,7 @@
 
         #form {
             background-color: white;
-            padding: 3rem;
+            padding: 0 3rem 3rem 3rem;
             border-radius: 2rem;
             color: hsl(228, 39%, 17%);
             font-size: 1.4rem;
@@ -225,6 +219,9 @@
         #form p {
             margin-bottom: .5rem;
             font-size: 1.2rem;
+            height: 3rem;
+            display: flex;
+            align-items: end;
         }
 
         #form select,
@@ -246,18 +243,24 @@
             width: calc(50% - .5rem);
         }
 
+        #form>div.w33 {
+            width: calc(33% - .5rem);
+        }
+
         #form #btn-enviar {
             background-color: hsl(228, 24%, 25%);
             color: white;
             cursor: pointer;
             text-align: center;
             font-size: 1.2rem;
-            padding: .5rem 0;
+            padding: .5rem 1rem;
             border-radius: .3rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            width: fit-content;
             gap: 1rem;
+            margin: 0 auto;
         }
 
         #form #btn-enviar:hover {
@@ -285,10 +288,22 @@
                 background-repeat: no-repeat;
                 background-color: hsl(224, 38%, 19%);
             }
+
+            #form{
+                width: 100%;
+                padding: 3rem;
+            }
+
+            #form p{
+                height: unset;
+            }
         }
 
         @media(width < 40rem) {
             #form>div.w50 {
+                width: 100%;
+            }
+            #form>div.w33 {
                 width: 100%;
             }
         }
@@ -373,7 +388,6 @@
             color: hsl(225, 8%, 72%);
         }
 
-        #mensaje-mail,
         #mensaje-error {
             position: fixed;
             width: 100%;
@@ -385,7 +399,6 @@
             justify-content: center;
         }
 
-        #mensaje-mail>div,
         #mensaje-error>div {
             color: hsl(0, 100%, 90%);
             border-radius: 1rem;
@@ -393,7 +406,6 @@
             background-color: hsl(0, 100%, 40%);
         }
 
-        #mensaje-mail.oculto,
         #mensaje-error.oculto {
             opacity: 0;
         }
@@ -548,135 +560,129 @@
                     <p>ACIERTOS Y NUEVAS NECESIDADES DE SEGUROS EN SECTORES VULNERABLES Y POPULARES DE BOLIVIA”</p>
                 </div>
             </div>
-            <div id="pie-col-1">
-                <h4>Certificación con valor curricular</h4>
-                <div id="pie-notas">
-                    <div class="con-punto" id="linea-blanca">
-                        <p>Webinar I Miércoles 3 de septiembre de 2025</p>
-                        <p>Webinar II Viernes 5 de septiembre de 2025</p>
+            <div id="col-2">
+                <form action="/satisfaccion" method="post" id="form" enctype="multipart/form-data" autocomplete="off"
+                    spellcheck="false">
+                    <div class="w33">
+                        <p>Universidad / Institución *</p>
+                        <input required type="text" name="institucion" id="institucion">
                     </div>
-                    <div class="con-punto">
-                        <p>10:00 - 12:00</p>
+                    <div class="w33">
+                        <p>Departamento *</p>
+                        <select required name="departamento" id="departamento">
+                            <option value=""></option>
+                            {{range $key, $departamento := .DEPARTAMENTOS}}
+                            <option value="{{$key}}">{{$departamento}}</option>
+                            {{end}}
+                        </select>
                     </div>
-                    <h5>Webinars gratuitos</h5>
+                    <div class="w33">
+                        <p>Número de celular *</p>
+                        <input required type="text" name="celular" id="celular">
+                    </div>
+                    <div class="w50">
+                        <p>¿Cómo calificaría la calidad general del webinar? *</p>
+                        <select required name="satisf_4" id="satisf_4">
+                            <option value=""></option>
+                            {{range $key, $s := .SATISFACCION_1}}
+                            <option value="{{$key}}">{{$s}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="w50">
+                        <p>¿Los temas tratados fueron relevantes y aplicables a su contexto profesional o académico? *
+                        </p>
+                        <select required name="satisf_5" id="satisf_5">
+                            <option value=""></option>
+                            {{range $key, $s := .SATISFACCION_2}}
+                            <option value="{{$key}}">{{$s}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="w50">
+                        <p>¿La duración del webinar le pareció adecuada? *</p>
+                        <select required name="satisf_6" id="satisf_6">
+                            <option value=""></option>
+                            {{range $key, $s := .SATISFACCION_3}}
+                            <option value="{{$key}}">{{$s}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="w50">
+                        <p>¿Qué opina sobre la organización del webinar? *</p>
+                        <select required name="satisf_7" id="satisf_7">
+                            <option value=""></option>
+                            {{range $key, $s := .SATISFACCION_1}}
+                            <option value="{{$key}}">{{$s}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="w50">
+                        <p>¿Cómo evaluaría el nivel técnico y claridad de los expositores? *</p>
+                        <select required name="satisf_8" id="satisf_8">
+                            <option value=""></option>
+                            {{range $key, $s := .SATISFACCION_4}}
+                            <option value="{{$key}}">{{$s}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="w50">
+                        <p>¿Los expositores lograron transmitir los contenidos de manera comprensible y dinámica? *</p>
+                        <select required name="satisf_9" id="satisf_9">
+                            <option value=""></option>
+                            {{range $key, $s := .SATISFACCION_3}}
+                            <option value="{{$key}}">{{$s}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="w50">
+                        <p>¿Considera que los contenidos fueron actualizados, pertinentes y aplicables? *</p>
+                        <select required name="satisf_10" id="satisf_10">
+                            <option value=""></option>
+                            {{range $key, $s := .SATISFACCION_2}}
+                            <option value="{{$key}}">{{$s}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="w50">
+                        <p>¿Qué aprendizajes principales obtuvo del webinar? *</p>
+                        <input required type="text" name="satisf_11" id="satisf_11">
+                    </div>
+                    <div class="w50">
+                        <p>¿Qué aspectos cree que podrían mejorarse en los próximos webinars? *</p>
+                        <input required type="text" name="satisf_12" id="satisf_12">
+                    </div>
+                    <div class="w50">
+                        <p>¿Recomendaría participar en próximos webinars organizados por UNIVIDA S.A.? *</p>
+                        <select required name="satisf_13" id="satisf_13">
+                            <option value=""></option>
+                            {{range $key, $s := .SATISFACCION_3}}
+                            <option value="{{$key}}">{{$s}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div>
+                        <div id="btn-enviar">Registrar Asistencia<div class="spinner"></div>
+                        </div>
+                    </div>
+                    <input type="submit" id="btn-enviar-h">
+                </form>
+                <div id="mensaje-exito" class="oculto">
+                    <div id="cont-svg-1"><img src="/static/img/exito1.svg" alt="icono"></div>
+                    <h3>ASISTENCIA REGISTRADA</h3>
+                    <h5>Gracias por asistir al webinar.</h5>
+                    <h6>Se ha registrado correctamente en nuestro sistema</h6>
+                    <p>Si tiene alguna pregunta, no dude en contactarnos</p>
                 </div>
-                <div id="logos-pie">
-                    <div><img src="/static/img/pie1.png" alt="img"></div>
-                    <div><img src="/static/img/pie2.png" alt="img"></div>
-                    <div><img src="/static/img/pie3.png" alt="img"></div>
-                    <div><img src="/static/img/pie4.png" alt="img"></div>
-                    <div><img src="/static/img/pie5.png" alt="img"></div>
-                </div>
-            </div>
-        </div>
-        <div id="col-2">
-            <form action="/enviar-inscripcion" method="post" id="form" enctype="multipart/form-data" autocomplete="off"
-                spellcheck="false">
-                <div>
-                    <p>Nombre Completo *</p>
-                    <input required type="text" name="nombre" id="nombre">
-                </div>
-                <div>
-                    <p>Universidad / Institución *</p>
-                    <input required type="text" name="institucion" id="institucion">
-                </div>
-                <div class="w50">
-                    <p>Número de celular *</p>
-                    <input required type="text" name="celular" id="celular">
-                </div>
-                <div class="w50">
-                    <p>Género *</p>
-                    <select required name="sexo" id="sexo">
-                        <option value=""></option>
-                        {{range $key, $sexo := .SEXO}}
-                        <option value="{{$key}}">{{$sexo}}</option>
-                        {{end}}
-                    </select>
-                </div>
-                <div>
-                    <p>Correo eléctronico *</p>
-                    <input required type="email" name="email" id="email" autocomplete="on">
-                </div>
-                <div class="w50">
-                    <p>Departamento *</p>
-                    <select required name="departamento" id="departamento">
-                        <option value=""></option>
-                        {{range $key, $departamento := .DEPARTAMENTOS}}
-                        <option value="{{$key}}">{{$departamento}}</option>
-                        {{end}}
-                    </select>
-                </div>
-                <div class="w50">
-                    <p>Cédula de identidad *</p>
-                    <input required type="text" name="carnet" id="carnet">
-                </div>
-                <div class="w50">
-                    <p>Ocupación *</p>
-                    <select required name="ocupacion" id="ocupacion">
-                        <option value=""></option>
-                        {{range $key, $ocupacion := .OCUPACIONES}}
-                        <option value="{{$key}}">{{$ocupacion}}</option>
-                        {{end}}
-                    </select>
-                </div>
-                <div class="w50">
-                    <p>Edad *</p>
-                    <select required name="edad" id="edad">
-                        <option value=""></option>
-                        {{range $key, $edad := .EDAD}}
-                        <option value="{{$key}}">{{$edad}}</option>
-                        {{end}}
-                    </select>
-                </div>
-                <div id="cont-captcha">
-                    <p>Por favor resuelva el CAPTCHA:</p>
-                    <div><img src="{{.ImagenCaptcha}}" alt="captcha" id="captcha-img"></div>
-                    <input type="text" required name="captcha-input" id="captcha-input">
-                    <input type="hidden" name="captcha-id" id="captcha-id" value="{{.IdCaptcha}}">
-                </div>
-                <input type="hidden" name="asistencia1" {{if .Asistencia1}}value="SI"{{else}}value="NO"{{end}}>
-                <input type="hidden" name="asistencia2" {{if .Asistencia2}}value="SI"{{else}}value="NO"{{end}}>
-                <div>
-                    {{if or .Asistencia1 .Asistencia2}}
-                    <div id="btn-enviar">Registrar Asistencia<div class="spinner"></div></div>
-                    {{else}}
-                    <div id="btn-enviar">Enviar Inscripción<div class="spinner"></div></div>
-                    {{end}}
-                </div>
-                <input type="submit" id="btn-enviar-h">
-            </form>
-            <div id="mensaje-exito" class="oculto">
-                <div id="cont-svg-1"><img src="/static/img/exito1.svg" alt="icono"></div>
-                {{if or .Asistencia1 .Asistencia2}}
-                <h3>ASISTENCIA REGISTRADA</h3>
-                <h5>Gracias por asistir al webinar.</h5>
-                <h6>Se ha registrado correctamente en nuestro sistema</h6>
-                <p>Si tiene alguna pregunta, no dude en contactarnos</p>
-                {{else}}
-                <h3>INSCRIPCIÓN</h3>
-                <h4>¡EXITOSA!</h4>
-                <h5>Gracias por completar su inscripción al webinar.</h5>
-                <h6>Se ha registrado correctamente en nuestro sistema</h6>
-                <div id="exito-pie">
-                    <div id="cont-svg-2"><img src="/static/img/exito2.svg" alt="icono"></div>
-                    <p id="p-11">Recibirá un correo electrónico de confirmación con todos los detalles de acceso</p>
-                    <p><b>48 horas antes del inicio del webinar</b></p>
-                </div>
-                <p>Si tiene alguna pregunta, no dude en contactarnos</p>
-                {{end}}
             </div>
         </div>
     </div>
     <div id="mensaje-error" class="oculto">
         <div>ERROR. Intente nuevamente</div>
     </div>
-    <div id="mensaje-mail" class="oculto">
-        <div>ERROR. Dirección de correo electrónico no válida.</div>
-    </div>
     <script>
         const form = document.getElementById('form');
-        const cmError = document.getElementById('mensaje-error');
-        const cmErrorMail = document.getElementById('mensaje-mail')
+        const cmError = document.getElementById('mensaje-error')
         const emailField = document.getElementById('email')
         window.onload = () => {
             form.reset()
@@ -695,21 +701,12 @@
                         document.getElementById("mensaje-exito").classList.remove("oculto")
                         form.classList.add("oculto")
                     } else {
-                        if (response.status == 400) {
-                            emailField.value = ""
-                            cmErrorMail.classList.remove("oculto")
-                            setTimeout(() => {
-                                cmErrorMail.classList.add("oculto")
-                            }, 3000)
-                            form.classList.remove("bloquear")
-                        } else {
-                            cmError.classList.remove("oculto")
-                            setTimeout(() => {
-                                cmError.classList.add("oculto")
-                            }, 3000)
-                            form.classList.remove("bloquear")
-                            renovarCaptcha()
-                        }
+                        cmError.classList.remove("oculto")
+                        setTimeout(() => {
+                            cmError.classList.add("oculto")
+                        }, 3000)
+                        form.classList.remove("bloquear")
+                        renovarCaptcha()
                     }
                 })
                 .catch(function (error) {
@@ -719,24 +716,6 @@
                     }, 3000)
                     renovarCaptcha()
                 });
-        }
-
-        function renovarCaptcha() {
-            fetch("/renovar-captcha")
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    document.getElementById("captcha-img").src = data.ImgB64
-                    document.getElementById("captcha-id").value = data.IdCaptcha
-                })
-                .catch(error => {
-                    console.error('There was a problem with the fetch operation:', error);
-                });
-            document.getElementById("captcha-input").value = ""
         }
 
         const btnEnviar = document.getElementById("btn-enviar")

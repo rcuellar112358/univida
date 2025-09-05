@@ -1,0 +1,93 @@
+{{define "titulo"}}Datos encuesta{{end}}
+{{define "css_extra"}}
+<style>
+    .parrafo {
+        max-width: 80rem;
+        width: fit-content;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .parrafo>div {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid gray;
+    }
+
+    .parrafo .label {
+        width: 20rem;
+        font-weight: 700;
+    }
+
+    .label-full{
+        width: 100%;
+        margin-bottom: 1rem;
+        font-style: italic;
+        font-size: 1.5rem;
+        color: hsl(0, 0%, 80%);
+    }
+
+    @media(width < 30rem) {
+        .parrafo>div {
+            flex-direction: column;
+        }
+    }
+</style>
+{{end}}
+{{define "contenido"}}
+<div class="parrafo">
+    <div>
+        <div class="label">Institucion:</div>
+        <div class="dato">{{.Satisfaccion.Satisfaccion.Institucion}}</div>
+    </div>
+    <div>
+        <div class="label">Departamento:</div>
+        <div class="dato">{{.Satisfaccion.DepartamentoStr}}</div>
+    </div>
+    <div>
+        <div class="label">Celular:</div>
+        <div class="dato">{{.Satisfaccion.Satisfaccion.Celular}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Cómo calificaría la calidad general del webinar?:</div>
+        <div class="dato">{{.Satisfaccion.Pregunta4Str}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Los temas tratados fueron relevantes y aplicables a su contexto profesional o académico?:</div>
+        <div class="dato">{{.Satisfaccion.Pregunta5Str}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿La duración del webinar le pareció adecuada?:</div>
+        <div class="dato">{{.Satisfaccion.Pregunta6Str}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Qué opina sobre la organización del webinar?:</div>
+        <div class="dato">{{.Satisfaccion.Pregunta7Str}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Cómo evaluaría el nivel técnico y claridad de los expositores?:</div>
+        <div class="dato">{{.Satisfaccion.Pregunta8Str}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Los expositores lograron transmitir los contenidos de manera comprensible y dinámica?:</div>
+        <div class="dato">{{.Satisfaccion.Pregunta9Str}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Considera que los contenidos fueron actualizados, pertinentes y aplicables?:</div>
+        <div class="dato">{{.Satisfaccion.Pregunta10Str}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Qué aprendizajes principales obtuvo del webinar?:</div>
+        <div class="dato">{{.Satisfaccion.Satisfaccion.Pregunta11}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Qué aspectos cree que podrían mejorarse en los próximos webinars?:</div>
+        <div class="dato">{{.Satisfaccion.Satisfaccion.Pregunta12}}</div>
+    </div>
+    <div>
+        <div class="label-full">¿Recomendaría participar en próximos webinars organizados por UNIVIDA S.A.?:</div> 
+        <div class="dato">{{.Satisfaccion.Pregunta13Str}}</div>
+    </div>
+</div>
+{{end}}
